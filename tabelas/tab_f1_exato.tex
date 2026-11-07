@@ -1,0 +1,27 @@
+\begin{table*}[t]
+\centering
+\caption{F1-macro (média $\pm$ desvio padrão entre as médias das 10 seeds) no cenário de estado exato. Todos os modelos recebem as mesmas features comprimidas. O $\pm$ só descreve a variação entre seeds e não serve como teste: as comparações estão na Tabela~\ref{tab:testes}.}
+\label{tab:f1_exato}
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llccccccc}
+\hline
+Base & Compressão & $d$ & Log. & SVM pad. & SVM aj. & QSVM sep. & QSVM fixa & QSVM aj. \\
+\hline
+Yelp & PCA & 4 & 0,919 $\pm$ 0,003 & 0,917 $\pm$ 0,003 & 0,917 $\pm$ 0,004 & 0,919 $\pm$ 0,002 & 0,518 $\pm$ 0,018 & 0,917 $\pm$ 0,003 \\
+Yelp & PCA & 8 & 0,917 $\pm$ 0,002 & 0,915 $\pm$ 0,002 & 0,916 $\pm$ 0,004 & 0,916 $\pm$ 0,003 & 0,509 $\pm$ 0,007 & 0,914 $\pm$ 0,004 \\
+Yelp & PCA & 12 & 0,920 $\pm$ 0,002 & 0,918 $\pm$ 0,002 & 0,915 $\pm$ 0,002 & 0,916 $\pm$ 0,003 & 0,501 $\pm$ 0,012 & 0,916 $\pm$ 0,004 \\
+Yelp & NCA & 4 & 0,912 $\pm$ 0,005 & 0,911 $\pm$ 0,007 & 0,894 $\pm$ 0,008 & 0,913 $\pm$ 0,004 & 0,512 $\pm$ 0,017 & 0,908 $\pm$ 0,008 \\
+Yelp & NCA & 8 & 0,912 $\pm$ 0,004 & 0,912 $\pm$ 0,004 & 0,899 $\pm$ 0,006 & 0,912 $\pm$ 0,005 & 0,499 $\pm$ 0,014 & 0,911 $\pm$ 0,004 \\
+Yelp & NCA & 12 & 0,914 $\pm$ 0,005 & 0,914 $\pm$ 0,004 & 0,912 $\pm$ 0,002 & 0,911 $\pm$ 0,005 & 0,502 $\pm$ 0,014 & 0,911 $\pm$ 0,006 \\
+\hline
+RePro & PCA & 4 & 0,940 $\pm$ 0,002 & 0,938 $\pm$ 0,002 & 0,941 $\pm$ 0,003 & 0,941 $\pm$ 0,002 & 0,521 $\pm$ 0,016 & 0,942 $\pm$ 0,003 \\
+RePro & PCA & 8 & 0,955 $\pm$ 0,003 & 0,953 $\pm$ 0,002 & 0,953 $\pm$ 0,004 & 0,954 $\pm$ 0,003 & 0,504 $\pm$ 0,021 & 0,955 $\pm$ 0,003 \\
+RePro & PCA & 12 & 0,955 $\pm$ 0,002 & 0,955 $\pm$ 0,003 & 0,954 $\pm$ 0,003 & 0,954 $\pm$ 0,004 & 0,523 $\pm$ 0,012 & 0,954 $\pm$ 0,003 \\
+RePro & NCA & 4 & 0,950 $\pm$ 0,003 & 0,944 $\pm$ 0,004 & 0,936 $\pm$ 0,004 & 0,948 $\pm$ 0,004 & 0,515 $\pm$ 0,017 & 0,947 $\pm$ 0,005 \\
+RePro & NCA & 8 & 0,950 $\pm$ 0,004 & 0,947 $\pm$ 0,003 & 0,948 $\pm$ 0,002 & 0,948 $\pm$ 0,003 & 0,515 $\pm$ 0,016 & 0,948 $\pm$ 0,004 \\
+RePro & NCA & 12 & 0,950 $\pm$ 0,006 & 0,951 $\pm$ 0,004 & 0,950 $\pm$ 0,006 & 0,949 $\pm$ 0,004 & 0,515 $\pm$ 0,016 & 0,948 $\pm$ 0,005 \\
+\hline
+\end{tabular}}
+\end{table*}
