@@ -3,16 +3,17 @@
     3,
     23
   ],
+  "yelp_repetidas_removidas": 4,
   "repro_original": 10003,
   "repro_so_pos_ou_neg": 7576,
   "repro_dentro_da_faixa": 5339,
   "yelp": {
-    "n": 1000,
-    "positivas": 500,
+    "n": 996,
+    "positivas": 499,
     "mediana": 10.0,
     "q1": 6.0,
     "q3": 15.0,
-    "media": 10.894,
+    "media": 10.919678714859439,
     "min": 1,
     "max": 32
   },

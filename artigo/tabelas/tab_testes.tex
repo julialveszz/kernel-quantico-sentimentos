@@ -1,0 +1,24 @@
+\begin{table*}[t]
+\centering
+\caption{Comparação principal entre QSVM e SVM ajustados no cenário exato, com 50 diferenças pareadas por configuração: diferença média de F1-macro com intervalo de confiança de 95\%, estatística $t$ corrigida de Nadeau e Bengio (49 graus de liberdade), p-valor com correção de Holm sobre as 12 configurações da comparação principal e diferença com cerca de 80\% de chance de ser detectada (DMD).}
+\label{tab:testes}
+\footnotesize
+\begin{tabular}{lllccccc}
+\toprule
+Comparação & Base & Compr. & $d$ & $\Delta$ F1 [IC 95\%] & $t$ & $p_{\mathrm{Holm}}$ & DMD \\
+\midrule
+H\textsubscript{1}: QSVM aj. $-$ SVM aj. & Yelp & PCA & 4 & 0,000 [-0,010; 0,010] & 0,04 & 1,000 & 0,019 \\
+ & Yelp & PCA & 8 & 0,000 [-0,008; 0,008] & 0,02 & 1,000 & 0,016 \\
+ & Yelp & PCA & 12 & -0,001 [-0,011; 0,009] & -0,17 & 1,000 & 0,020 \\
+ & Yelp & NCA & 4 & 0,000 [-0,007; 0,008] & 0,05 & 1,000 & 0,015 \\
+ & Yelp & NCA & 8 & -0,001 [-0,009; 0,007] & -0,20 & 1,000 & 0,016 \\
+ & Yelp & NCA & 12 & -0,002 [-0,012; 0,008] & -0,37 & 1,000 & 0,020 \\
+ & RePro & PCA & 4 & 0,001 [-0,007; 0,010] & 0,32 & 1,000 & 0,017 \\
+ & RePro & PCA & 8 & 0,000 [-0,010; 0,009] & -0,04 & 1,000 & 0,018 \\
+ & RePro & PCA & 12 & -0,003 [-0,013; 0,007] & -0,58 & 1,000 & 0,019 \\
+ & RePro & NCA & 4 & 0,001 [-0,007; 0,010] & 0,32 & 1,000 & 0,017 \\
+ & RePro & NCA & 8 & -0,003 [-0,012; 0,007] & -0,55 & 1,000 & 0,018 \\
+ & RePro & NCA & 12 & -0,001 [-0,010; 0,008] & -0,25 & 1,000 & 0,017 \\
+\bottomrule
+\end{tabular}
+\end{table*}

@@ -21,6 +21,8 @@ with open("dados/yelp_labelled.txt", encoding="utf-8") as f:
         texto, rotulo = linha.rsplit("\t", 1)
         linhas.append({"texto": texto.strip(), "rotulo": int(rotulo)})
 yelp = pd.DataFrame(linhas)
+repetidas_yelp = int(yelp.duplicated(subset="texto").sum())
+yelp = yelp.drop_duplicates(subset="texto").reset_index(drop=True)   # 4 frases aparecem duas vezes
 yelp["palavras"] = yelp["texto"].apply(contar_palavras)
 
 # faixa de tamanho que vai ser usada na RePro
@@ -56,6 +58,7 @@ def resumo(df):
 
 info = {
     "faixa_palavras_usada": [minimo, maximo],
+    "yelp_repetidas_removidas": repetidas_yelp,
     "repro_original": int(len(repro_bruta)),
     "repro_so_pos_ou_neg": int(repro_bruta["polarity"].isin(["['POSITIVO']", "['NEGATIVO']"]).sum()),
     "repro_dentro_da_faixa": int(len(repro)),

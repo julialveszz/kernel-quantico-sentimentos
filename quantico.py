@@ -33,20 +33,41 @@ def hadamard_em_todos(psi):
         passo *= 2
     return psi / np.sqrt(tamanho)
 
+_cache_hadamard = {}
+
+def _hadamard_matriz(k):
+    if k not in _cache_hadamard:
+        H = np.array([[1.0]])
+        for _ in range(k):
+            H = np.kron(H, np.array([[1.0, 1.0], [1.0, -1.0]]))
+        _cache_hadamard[k] = (H / np.sqrt(2 ** k)).astype(np.complex128)
+    return _cache_hadamard[k]
+
+def _hadamard_rapido(psi, n):
+    # H em todos os qubits = H^{n1} x H^{n2}, aplicado com duas multiplicacoes de matriz
+    n1 = n // 2
+    n2 = n - n1
+    H1, H2 = _hadamard_matriz(n1), _hadamard_matriz(n2)
+    X = psi.reshape(len(psi), 2 ** n1, 2 ** n2)
+    X = np.matmul(H1, X)
+    X = np.matmul(X, H2.T)
+    return X.reshape(len(psi), 2 ** n)
+
 def estados(angulos, emaranhamento=True):
     # angulos: matriz (N x n) ja multiplicada pela largura de banda
     angulos = np.asarray(angulos, dtype=np.float64)
     N, n = angulos.shape
-    s, s_pares, pares = sinais(n)
+    s, _, _ = sinais(n)
     fase = angulos @ s.T                                       # parte de 1 qubit
-    if emaranhamento and pares:
-        termos = np.stack([(np.pi - angulos[:, i]) * (np.pi - angulos[:, j]) for i, j in pares], axis=1)
-        fase = fase + termos @ s_pares.T                       # parte dos pares (ZZ)
+    if emaranhamento and n > 1:
+        # soma dos pares (pi - x_i)(pi - x_j) s_i s_j = ((pi - x).s)^2 / 2 - |pi - x|^2 / 2, ja que s_i^2 = 1
+        c = np.pi - angulos
+        fase = fase + 0.5 * ((c @ s.T) ** 2 - np.sum(c ** 2, axis=1, keepdims=True))
+    # complex128 porque, com larguras de banda muito pequenas, os valores do kernel ficam muito perto de 1
     giro = np.exp(1j * fase)
     psi = giro / np.sqrt(2 ** n)                               # U(x) H|0>
-    psi = hadamard_em_todos(psi)                               # H
-    psi = giro * psi                                           # U(x)
-    return psi.astype(np.complex64)
+    psi = _hadamard_rapido(psi, n)                             # H
+    return giro * psi                                          # U(x)
 
 def kernel_exato(estados_a, estados_b):
     sobreposicao = estados_a.conj() @ estados_b.T
@@ -67,10 +88,26 @@ def aplicar_ruido(K, n, erro_por_cnot, emaranhamento=True):
 def amostrar_shots(K, shots, gerador, simetrica=False):
     # estima cada entrada contando quantas vezes saiu |0...0> em 'shots' medicoes
     if simetrica:
-        K_est = np.eye(K.shape[0])
+        # a diagonal tambem e medida, entao com ruido ela fica abaixo de 1, igual ao modelo
+        K_est = np.diag(gerador.binomial(shots, np.clip(np.diag(K), 0, 1)) / shots)
         i, j = np.triu_indices(K.shape[0], 1)
         valores = gerador.binomial(shots, np.clip(K[i, j], 0, 1)) / shots
         K_est[i, j] = valores
         K_est[j, i] = valores
         return K_est
     return gerador.binomial(shots, np.clip(K, 0, 1)) / shots
+
+def kernel_separavel(angulos_a, angulos_b):
+    # sem os termos ZZ o estado e um produto de qubits independentes, entao o kernel
+    # e o produto das sobreposicoes de cada qubit. da o mesmo valor que estados() + kernel_exato(),
+    # mas sem montar o vetor de 2^n posicoes (bem mais rapido com 8 e 12 qubits)
+    a = np.asarray(angulos_a, dtype=np.float64)
+    b = np.asarray(angulos_b, dtype=np.float64)
+    def qubit(x):
+        # U(x) H U(x) H |0> num qubit so: [cos(x) e^{ix}, i sen(x) e^{-ix}]
+        return np.stack([np.cos(x) * np.exp(1j * x), 1j * np.sin(x) * np.exp(-1j * x)], axis=-1)
+    Qa, Qb = qubit(a), qubit(b)
+    produto = np.ones((len(a), len(b)), dtype=np.complex128)
+    for i in range(a.shape[1]):
+        produto *= Qa[:, i, :].conj() @ Qb[:, i, :].T
+    return np.clip(np.abs(produto) ** 2, 0.0, 1.0)

@@ -30,11 +30,13 @@ def t_corrigido(dif):
     var = float(dif.var(ddof=1))
     erro = np.sqrt((1 / k + RAZAO_TESTE_TREINO) * var)
     if erro == 0:
-        return media, (media, media), 0.0, 1.0
+        return media, (media, media), 0.0, 1.0, 0.0
     t = media / erro
     p = float(2 * stats.t.sf(abs(t), k - 1))
     q = stats.t.ppf(0.975, k - 1)
-    return media, (media - q * erro, media + q * erro), float(t), p
+    # diferenca com ~80% de chance de ser detectada no limiar mais rigoroso do Holm (0,05/12)
+    dmd = float((stats.t.ppf(1 - config.ALFA / 12 / 2, k - 1) + stats.t.ppf(0.80, k - 1)) * erro)
+    return media, (media - q * erro, media + q * erro), float(t), p, dmd
 
 def holm(pvalores):
     pvalores = np.asarray(pvalores, dtype=float)
@@ -67,10 +69,10 @@ for cenario in cenarios:
                     a, b = folds(base, comp, d, cenario, m1), folds(base, comp, d, cenario, m2)
                     if a is None or b is None:
                         continue
-                    media, ic, t, p = t_corrigido(a - b)
+                    media, ic, t, p, dmd = t_corrigido(a - b)
                     grupo.append({"base": base, "cenario": cenario, "comparacao": nome, "compressao": comp, "d": d,
                                   "media_1": float(a.mean()), "media_2": float(b.mean()), "diferenca": media,
-                                  "ic_inf": ic[0], "ic_sup": ic[1], "t": t, "p": p, "n_pares": len(a)})
+                                  "ic_inf": ic[0], "ic_sup": ic[1], "t": t, "p": p, "dmd": dmd, "n_pares": len(a)})
         for g, pa in zip(grupo, holm([g["p"] for g in grupo])):
             g["p_holm"] = float(pa)
         linhas += grupo
@@ -83,10 +85,10 @@ for cenario in cenarios:
                 continue
             dif_pca = s["pca"][0] - s["pca"][1]
             dif_nca = s["nca"][0] - s["nca"][1]
-            media, ic, t, p = t_corrigido(dif_pca - dif_nca)
+            media, ic, t, p, dmd = t_corrigido(dif_pca - dif_nca)
             grupo.append({"base": base, "cenario": cenario, "comparacao": "H3_dif_pca_vs_nca", "compressao": "pca-nca", "d": d,
                           "media_1": float(dif_pca.mean()), "media_2": float(dif_nca.mean()), "diferenca": media,
-                          "ic_inf": ic[0], "ic_sup": ic[1], "t": t, "p": p, "n_pares": len(dif_pca)})
+                          "ic_inf": ic[0], "ic_sup": ic[1], "t": t, "p": p, "dmd": dmd, "n_pares": len(dif_pca)})
     for g, pa in zip(grupo, holm([g["p"] for g in grupo])):
         g["p_holm"] = float(pa)
     linhas += grupo
@@ -98,6 +100,8 @@ testes.to_csv("resultados/testes_estatisticos.csv", index=False)
 por_seed = df.groupby(["base", "compressao", "d", "cenario", "modelo", "seed"])["f1"].mean()
 resumo = por_seed.groupby(["base", "compressao", "d", "cenario", "modelo"]).agg(["mean", "std"]).reset_index()
 resumo.columns = ["base", "compressao", "d", "cenario", "modelo", "f1_media", "f1_dp"]
+extra = df.groupby(["base", "compressao", "d", "cenario", "modelo"])[["f1_treino", "alinhamento_rbf"]].mean().reset_index()
+resumo = resumo.merge(extra, on=["base", "compressao", "d", "cenario", "modelo"], how="left")
 resumo.to_csv("resultados/resumo_f1.csv", index=False)
 
 # hiperparametros escolhidos (estabilidade do ajuste)

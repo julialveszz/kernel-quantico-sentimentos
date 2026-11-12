@@ -1,0 +1,26 @@
+\begin{table}[t]
+\centering
+\caption{F1-macro do QSVM ajustado em cada cenário de cálculo do kernel. Os cenários com ruído foram rodados só com 4 e 8 qubits.}
+\label{tab:cenarios}
+\footnotesize
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llccccc}
+\toprule
+Base & Compr. & $d$ & Exato & 1.000 shots & Ruído $p=0{,}001$ & Ruído $p=0{,}01$ \\
+\midrule
+Yelp & PCA & 4 & 0,917 & 0,910 & 0,907 & 0,906 \\
+Yelp & PCA & 8 & 0,917 & 0,906 & 0,904 & 0,828 \\
+Yelp & PCA & 12 & 0,914 & 0,899 & n.a. & n.a. \\
+Yelp & NCA & 4 & 0,911 & 0,904 & 0,904 & 0,897 \\
+Yelp & NCA & 8 & 0,911 & 0,903 & 0,899 & 0,834 \\
+Yelp & NCA & 12 & 0,912 & 0,902 & n.a. & n.a. \\
+\midrule
+RePro & PCA & 4 & 0,942 & 0,934 & 0,931 & 0,929 \\
+RePro & PCA & 8 & 0,953 & 0,941 & 0,939 & 0,876 \\
+RePro & PCA & 12 & 0,952 & 0,938 & n.a. & n.a. \\
+RePro & NCA & 4 & 0,947 & 0,945 & 0,943 & 0,939 \\
+RePro & NCA & 8 & 0,948 & 0,937 & 0,933 & 0,879 \\
+RePro & NCA & 12 & 0,949 & 0,935 & n.a. & n.a. \\
+\bottomrule
+\end{tabular}}
+\end{table}

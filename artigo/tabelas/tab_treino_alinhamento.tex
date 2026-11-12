@@ -1,0 +1,27 @@
+\begin{table}[t]
+\centering
+\caption{F1-macro no treino e no teste do QSVM com largura de banda fixa ($b = 1$) e alinhamento centrado entre o kernel quântico escolhido e o kernel RBF do \svm{} ajustado, no cenário exato (médias entre seeds e folds).}
+\label{tab:treino_alinhamento}
+\footnotesize
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llccccc}
+\toprule
+& & & \multicolumn{2}{c}{QSVM largura fixa} & \multicolumn{2}{c}{Alinhamento com RBF} \\
+Base & Compr. & $d$ & treino & teste & QSVM aj. & QSVM sep. \\
+\midrule
+Yelp & PCA & 4 & 0,771 & 0,519 & 0,694 & 0,941 \\
+Yelp & PCA & 8 & 1,000 & 0,504 & 0,434 & 0,966 \\
+Yelp & PCA & 12 & 1,000 & 0,497 & 0,383 & 0,959 \\
+Yelp & NCA & 4 & 0,776 & 0,523 & 0,706 & 0,953 \\
+Yelp & NCA & 8 & 1,000 & 0,506 & 0,439 & 0,984 \\
+Yelp & NCA & 12 & 1,000 & 0,499 & 0,397 & 0,976 \\
+\midrule
+RePro & PCA & 4 & 0,769 & 0,517 & 0,703 & 0,943 \\
+RePro & PCA & 8 & 1,000 & 0,504 & 0,427 & 0,956 \\
+RePro & PCA & 12 & 1,000 & 0,523 & 0,383 & 0,974 \\
+RePro & NCA & 4 & 0,767 & 0,511 & 0,699 & 0,950 \\
+RePro & NCA & 8 & 1,000 & 0,516 & 0,445 & 0,962 \\
+RePro & NCA & 12 & 1,000 & 0,514 & 0,404 & 0,954 \\
+\bottomrule
+\end{tabular}}
+\end{table}

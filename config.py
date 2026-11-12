@@ -9,6 +9,8 @@ PERCENTIS_TAMANHO = (5, 95)       # faixa de tamanho (em palavras) das frases da
 MODELO_EMBEDDING = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 # compressao e qubits
+NCA_MAX_ITER = 50
+NCA_TOL = 1e-5
 COMPRESSOES = ["pca", "nca"]
 DIMENSOES = [4, 8, 12]
 
@@ -21,9 +23,10 @@ N_FOLDS_INTERNOS = 3              # busca em grade dentro de cada fold de treino
 GRADE_C = [0.1, 1, 10, 100]
 GRADE_GAMMA = [0.001, 0.01, 0.1, 1, 10]
 GRADE_C_LOGISTICA = [0.01, 0.1, 1, 10, 100]
-# rodada 2: na rodada 1 a largura escolhida foi quase sempre 0,05, o menor valor da grade,
-# entao a grade foi estendida pra baixo pra ver se o melhor valor estava fora dela
-GRADE_LARGURA_BANDA = [0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 1.0]
+# rodada 1: 0,05 a 1 (o escolhido ficou no limite de baixo)
+# rodada 2: 0,002 a 1, sem valores entre 0,1 e 1 (de novo no limite com 12 qubits)
+# rodada 3: grade estendida nos dois lados
+GRADE_LARGURA_BANDA = [0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0]
 LARGURA_FIXA = 1.0                # versao do QSVM sem ajuste de largura de banda
 
 # SVM padrao, igual ao usado em Cajas Ordonez et al.
@@ -37,7 +40,7 @@ DIMENSOES_COM_RUIDO = [4, 8]
 
 # analise de concentracao (H4)
 QUBITS_CONCENTRACAO = list(range(2, 17))
-LARGURAS_CONCENTRACAO = [0.01, 0.05, 0.1, 0.5, 1.0]
+LARGURAS_CONCENTRACAO = [0.002, 0.01, 0.05, 0.1, 0.5, 1.0]
 N_PONTOS_CONCENTRACAO = 300
 
 # estatistica

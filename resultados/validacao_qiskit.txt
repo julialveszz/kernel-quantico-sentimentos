@@ -1,4 +1,4 @@
-n=2: maior diferenca entre os kernels = 1.19e-07
-n=3: maior diferenca entre os kernels = 2.38e-07
-n=4: maior diferenca entre os kernels = 2.38e-07
-n=5: maior diferenca entre os kernels = 4.77e-07
+n=2: maior diferenca entre os kernels = 3.86e-15
+n=3: maior diferenca entre os kernels = 2.16e-15
+n=4: maior diferenca entre os kernels = 3.55e-15
+n=5: maior diferenca entre os kernels = 3.33e-15
