@@ -13,7 +13,7 @@ A avaliação usa 10 sementes de validação cruzada estratificada com 5 folds. 
 - [Resultados por fold](resultados/resultados_por_fold.csv): métricas e hiperparâmetros escolhidos na rodada 3.
 - [Testes estatísticos](resultados/testes_estatisticos.csv): diferenças pareadas, intervalos, p-valores e DMD.
 - [Rodadas anteriores](resultados/): subpastas `rodada1/` e `rodada2/`.
-- [Artigo em LaTeX](artigo/artigo.tex): fonte e arquivos para compilação no Overleaf.
+- [Artigo em LaTeX](artigo/artigo.tex): fonte, figuras e tabelas.
 - [Suplemento](artigo/suplemento/): tabela completa e CSV dos testes.
 
 As figuras da versão do artigo são geradas a partir de `resultados/resumo_f1.csv` pelo script `artigo/gerar_figuras.py`. O script `07_figuras.py` gera as figuras da versão anterior do experimento, na pasta `figuras/` da raiz. As tabelas incluídas no artigo estão em `artigo/tabelas/`; as da raiz são geradas por `06_tabelas_latex.py`.

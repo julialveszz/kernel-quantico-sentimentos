@@ -5,6 +5,9 @@
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
+
+% Usa os arquivos do artigo tanto na raiz do repositório quanto na pasta artigo.
+\IfFileExists{artigo/artigo.tex}{\def\pastaArtigo{artigo/}}{\def\pastaArtigo{}}
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{url}
@@ -228,11 +231,11 @@ em que $\bar{\delta}$ e $\hat{\sigma}^2$ são a média e a variância das difere
 \subsection{Desempenho no cenário exato}
 A Tabela~\ref{tab:f1_exato} mostra o F1-macro de todos os modelos no cenário de estado exato, e a Fig.~\ref{fig:principal} resume o desempenho médio do QSVM e do \svm{} ajustados em cada base. Já com 4 dimensões, os três modelos clássicos ficaram entre 0,908 e 0,949, e com 8 e 12 dimensões eles mudaram pouco, no máximo 0,017, na RePro com PCA. O QSVM ajustado ficou entre 0,911 e 0,953, o QSVM sem emaranhamento entre 0,910 e 0,954, e o QSVM com largura de banda fixa entre 0,497 e 0,523, o nível de um classificador que acerta por acaso em uma tarefa binária balanceada. Na RePro, todos os modelos tiveram valores mais altos que na Yelp, mas, como as bases diferem também no domínio, essa diferença não é comparada estatisticamente. O desvio padrão entre as médias das seeds ficou entre 0,001 e 0,024.
 
-\input{tabelas/tab_f1_exato.tex}
+\input{\pastaArtigo tabelas/tab_f1_exato.tex}
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.8\textwidth]{figuras/fig_principal.pdf}
+\includegraphics[width=0.8\textwidth]{\pastaArtigo figuras/fig_principal.pdf}
 \caption{F1-macro médio de teste do QSVM e do \svm{} ajustados no cenário exato, por base. Cada barra representa a média das seis configurações de compressão e número de qubits, com 10 seeds e 5 folds por configuração. O eixo vertical começa em 0,89. $\Delta$ é a diferença QSVM menos \svm{}, em pontos percentuais. A figura é descritiva; os intervalos de confiança e p-valores por configuração estão na Tabela~\ref{tab:testes}.}
 \label{fig:principal}
 \end{figure*}
@@ -240,33 +243,33 @@ A Tabela~\ref{tab:f1_exato} mostra o F1-macro de todos os modelos no cenário de
 \subsection{Comparação principal e comparativo base (H\textsubscript{0} a H\textsubscript{2})}
 A Tabela~\ref{tab:testes} mostra os testes pareados da comparação principal no cenário exato; os testes completos das demais comparações estão no material suplementar. Nenhuma das 12 diferenças entre o QSVM ajustado e o \svm{} ajustado foi significativa, nem antes da correção de Holm, com p-valores a partir de 0,57 e diferenças médias entre $-0{,}003$ e $+0{,}001$, e por isso H\textsubscript{0} não é rejeitada. Os intervalos de confiança ficaram entre $-0{,}013$ e $+0{,}010$, e a diferença com cerca de 80\% de chance de ser detectada ficou entre 0,015 e 0,020, dependendo da configuração. Também não houve diferença significativa entre o \svm{} ajustado e o \svm{} padrão (p-valores a partir de 0,46, com diferenças entre $-0{,}002$ e $+0{,}004$), nem entre o QSVM e o \svm{} padrão (a partir de 0,38) ou entre o QSVM e a regressão logística (a partir de 0,19). Na rodada anterior, em que a busca não era aninhada, o \svm{} ajustado ficava abaixo do \svm{} padrão nas configurações com NCA; nesta rodada, isso deixou de acontecer, e as diferenças a favor do QSVM que apareciam nessas configurações também desapareceram.
 
-\input{tabelas/tab_testes.tex}
+\input{\pastaArtigo tabelas/tab_testes.tex}
 
 \subsection{Efeito da compressão (H\textsubscript{3})}
 A Tabela~\ref{tab:h3} mostra a diferença média entre o QSVM e o \svm{} ajustado com PCA e com NCA. Como a H\textsubscript{3} prevê uma diferença menor em magnitude com NCA, é preciso separar duas coisas. O teste da tabela compara a diferença assinada entre as duas compressões, e essa mudança não foi significativa em nenhuma configuração (p-valores a partir de 0,73 antes da correção de Holm). Em termos descritivos, a magnitude da diferença ficou abaixo de 0,003 nas duas compressões. Como o teste compara as diferenças assinadas, ele não testa diretamente se a magnitude da diferença diminuiu com NCA.
 
-\input{tabelas/tab_h3.tex}
+\input{\pastaArtigo tabelas/tab_h3.tex}
 
 \subsection{Número de qubits e concentração do kernel (H\textsubscript{4})}
 A variância dos valores do kernel fora da diagonal foi analisada de 2 a 16 qubits na RePro; na Yelp, os valores ficaram na mesma ordem de grandeza. Com emaranhamento e $b = 1$, a variância caiu de $5{,}3\times10^{-2}$ com 2 qubits para $1{,}6\times10^{-9}$ com 16, e com $b = 0{,}1$ ela caiu de $6{,}9\times10^{-2}$ para $5{,}1\times10^{-6}$. Com $b = 0{,}01$, a variância aumentou com o número de qubits, de $3{,}1\times10^{-5}$ para $5{,}1\times10^{-2}$. Sem emaranhamento, a variância com $b = 1$ caiu de forma bem mais lenta, de $7{,}3\times10^{-2}$ para $1{,}3\times10^{-5}$, e com as larguras menores ela aumentou com o número de qubits.
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.55\textwidth]{figuras/fig_f1_treino_teste.pdf}
+\includegraphics[width=0.55\textwidth]{\pastaArtigo figuras/fig_f1_treino_teste.pdf}
 \caption{F1-macro médio de teste do QSVM com largura de banda fixa e ajustada no cenário exato. Cada ponto resume as seis configurações de compressão e número de qubits, com 10 seeds e 5 folds por configuração; os pontos são médias descritivas, sem intervalos de confiança. Os valores por configuração estão na Tabela~\ref{tab:f1_exato}.}
 \label{fig:f1_treino_teste}
 \end{figure*}
 
 Na Fig.~\ref{fig:f1_treino_teste}, o F1-macro de teste é apresentado para as duas configurações de largura. No experimento de classificação, a diferença entre o QSVM com largura ajustada e o QSVM com largura fixa foi significativa em todas as 12 configurações, de $+0{,}39$ a $+0{,}45$. A Tabela~\ref{tab:treino_alinhamento} mostra que, com largura fixa e 8 ou 12 qubits, o F1-macro no treino foi 1,000 e no teste ficou perto de 0,50, enquanto com 4 qubits o F1-macro no treino ficou em torno de 0,77, também com o teste perto de 0,50. Com a largura ajustada, o valor escolhido diminuiu conforme o número de qubits aumentou, ficando principalmente entre 0,01 e 0,02 com 4 qubits, entre 0,005 e 0,01 com 8 e entre 0,001 e 0,005 com 12, e o menor valor da grade (0,0005) foi escolhido em no máximo 2\% dos folds. Com esse ajuste, não houve queda consistente do F1-macro do QSVM entre 4 e 12 qubits.
 
-\input{tabelas/tab_treino_alinhamento.tex}
+\input{\pastaArtigo tabelas/tab_treino_alinhamento.tex}
 
 A Tabela~\ref{tab:treino_alinhamento} também mostra o alinhamento centrado entre o kernel quântico escolhido e o kernel RBF do \svm{} ajustado. Para o QSVM ajustado, ele ficou em torno de 0,70 com 4 qubits e caiu para valores entre 0,38 e 0,45 com 8 e 12 qubits, enquanto para o QSVM sem emaranhamento ficou entre 0,94 e 0,98 em todas as configurações.
 
 \subsection{Shots e ruído}
 A Tabela~\ref{tab:cenarios} mostra o QSVM ajustado nos diferentes cenários. Em relação ao estado exato, a estimativa com 1.000 shots reduziu o F1-macro em 0,002 a 0,008 com 4 qubits, em 0,008 a 0,013 com 8 e em 0,011 a 0,015 com 12. Com ruído de $p = 0{,}001$, a redução foi de 0,004 a 0,011 com 4 qubits e de 0,012 a 0,015 com 8, e com $p = 0{,}01$ ela foi de 0,008 a 0,013 com 4 qubits e de 0,069 a 0,089 com 8, configuração em que o fator $F$ fica em 0,105. Com shots e com ruído de $p = 0{,}001$, nenhuma diferença entre o QSVM ajustado e os modelos clássicos foi significativa. Com $p = 0{,}01$ e 8 qubits, o QSVM ficou significativamente abaixo do \svm{} ajustado, do \svm{} padrão, da regressão logística e da versão sem emaranhamento nas 4 configurações, com diferenças de $-0{,}065$ a $-0{,}090$; com 4 qubits, nenhuma dessas diferenças foi significativa. A versão sem emaranhamento, que não tem CNOTs, ficou entre 0,908 e 0,950 nesse mesmo cenário.
 
-\input{tabelas/tab_cenarios.tex}
+\input{\pastaArtigo tabelas/tab_cenarios.tex}
 
 \subsection{Ablação sem emaranhamento (H\textsubscript{5})}
 No cenário exato, nenhuma diferença entre o QSVM com e sem emaranhamento foi significativa (p-valores a partir de 0,69, com diferenças entre $-0{,}002$ e $+0{,}002$), e o mesmo aconteceu com 1.000 shots e com ruído de $p = 0{,}001$. Com ruído de $p = 0{,}01$ e 8 qubits, a versão com emaranhamento ficou abaixo, como descrito acima.
