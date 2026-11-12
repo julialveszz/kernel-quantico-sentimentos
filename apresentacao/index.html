@@ -1,0 +1,751 @@
+<!doctype html><html lang="pt-br"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta charset="utf-8">
+<title>Kernel Quântico vs SVM</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: palco 16:9 de 1600x900 escalado ao viewport; cada slide = título à esquerda no topo + um diagrama que ocupa o resto (leitura em Z). */
+:root{
+  --paper:#F5F6FB;      /* fundo do slide, branco frio */
+  --surround:#E8EAF3;   /* em volta do palco */
+  --ink:#171A33;        /* texto principal */
+  --muted:#5A6082;      /* texto de apoio */
+  --line:#D9DDEC;       /* contornos */
+  --card:#FFFFFF;
+  --q:#6A4CFF;          /* quântico */
+  --q-soft:#ECE8FF;
+  --q-ink:#4A2FD4;
+  --c:#5A6283;          /* clássico: ardósia neutra */
+  --c-soft:#E7E9F2;
+  --c-ink:#3A4163;
+  --display:'Sora', 'Trebuchet MS', Arial, sans-serif;
+  --body:'Figtree', 'Segoe UI', Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#12152B; --surround:#0B0D1C; --ink:#EEF0FA; --muted:#A5ABCB; --line:#2C3156; --card:#1A1E3A;
+    --q:#9C88FF; --q-soft:#262052; --q-ink:#C9BEFF; --c:#A9B0D0; --c-soft:#252A47; --c-ink:#CDD2EA;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#12152B; --surround:#0B0D1C; --ink:#EEF0FA; --muted:#A5ABCB; --line:#2C3156; --card:#1A1E3A;
+  --q:#9C88FF; --q-soft:#262052; --q-ink:#C9BEFF; --c:#A9B0D0; --c-soft:#252A47; --c-ink:#CDD2EA;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--surround);color:var(--ink);font-family:var(--body);display:flex;flex-direction:column;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:12px;box-sizing:border-box;gap:10px;overflow:hidden}
+.viewport{position:relative;flex:1;min-height:0}
+.stage{position:absolute;left:50%;top:50%;width:1600px;height:900px;transform-origin:center;background:var(--paper);
+  border-radius:20px;overflow:hidden;box-shadow:0 1px 0 var(--line)}
+.slide{position:absolute;inset:0;padding:72px 88px;display:flex;flex-direction:column;gap:36px;
+  opacity:0;visibility:hidden;transition:opacity .35s ease, visibility .35s}
+.slide.active{opacity:1;visibility:visible}
+@media (prefers-reduced-motion: reduce){.slide{transition:none}}
+.progress{position:absolute;left:0;top:0;height:6px;background:var(--q);transition:width .35s ease}
+
+h1,h2{font-family:var(--display);margin:0;text-wrap:balance;color:var(--ink)}
+h1{font-size:76px;font-weight:700;letter-spacing:-2px;line-height:1.05}
+h2{font-size:52px;font-weight:600;letter-spacing:-1.2px;line-height:1.1}
+h3,h4{font-family:var(--display);margin:0;font-weight:600}
+.lede{font-size:27px;line-height:1.45;color:var(--muted);margin:12px 0 0;max-width:1240px}
+.lede b{color:var(--ink);font-weight:600}
+header{flex:none}
+.figure{flex:1;min-height:0;display:flex}
+.figure>svg{width:100%;height:100%}
+
+svg text{font-family:var(--body)}
+.t{font-size:24px;fill:var(--ink)}
+.ts{font-size:21px;fill:var(--muted)}
+.tb{font-weight:700}
+.tq{fill:var(--q-ink)} .tc{fill:var(--c-ink)} .tp{fill:var(--paper)}
+.f-ink{fill:var(--ink)} .f-card{fill:var(--card)} .f-paper{fill:var(--paper)} .f-q{fill:var(--q)} .f-c{fill:var(--c)}
+.f-qs{fill:var(--q-soft)} .f-cs{fill:var(--c-soft)} .f-none{fill:none} .f-muted{fill:var(--muted)}
+.ln{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.st-line{stroke:var(--line);stroke-width:2} .st-ink{stroke:var(--ink)} .st-q{stroke:var(--q)} .st-c{stroke:var(--c)} .st-muted{stroke:var(--muted)}
+.dash{stroke-dasharray:8 8}
+.arrow{fill:none;stroke:var(--muted);stroke-width:3;stroke-linecap:round;marker-end:url(#arr)}
+.pos{fill:var(--ink)} .neg{fill:var(--paper);stroke:var(--ink);stroke-width:3}
+
+.ic{width:40px;height:40px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* capa */
+.cover{justify-content:space-between}
+.author{font-size:24px;color:var(--muted);margin-top:28px}
+.author b{color:var(--ink);font-weight:600}
+.legend{display:flex;gap:28px;font-size:22px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:10px}
+.dot{width:16px;height:16px;border-radius:50%;display:inline-block}
+
+/* circuito: legendas */
+.callouts{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;flex:none}
+.callouts>div{display:flex;flex-direction:column;gap:8px;padding-top:18px;border-top:3px solid var(--q)}
+.callouts h4{font-size:25px;color:var(--q-ink)}
+.callouts.two{grid-template-columns:1fr 1fr}
+.callouts .cl{border-top-color:var(--c)}
+.callouts .cl h4{color:var(--c-ink)}
+.callouts p{margin:0;font-size:22px;line-height:1.45;color:var(--muted)}
+
+/* originalidade */
+.split{display:grid;grid-template-columns:1.25fr 1fr;gap:40px;flex:none}
+.split h3{font-size:26px;margin-bottom:16px}
+.novel{display:grid;grid-template-columns:1fr 1fr;gap:14px 24px;margin:0;padding:0;list-style:none}
+.novel li{display:flex;align-items:center;gap:14px;font-size:22px;line-height:1.3;color:var(--ink)}
+.novel .ic{width:34px;height:34px;color:var(--q-ink)}
+.base-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.base{border:2px solid var(--line);border-radius:20px;padding:20px 22px;display:flex;flex-direction:column;gap:6px}
+.base h4{font-size:24px}
+.base .lang{font-size:19px;color:var(--q-ink);font-weight:600}
+.base p{margin:0;font-size:20px;line-height:1.4;color:var(--muted)}
+
+/* pergunta */
+.question{background:var(--q);color:#FFFFFF;border-radius:28px;padding:40px 48px;display:flex;flex-direction:column;gap:16px;flex:none}
+.question p{margin:0}
+.question .big{font-family:var(--display);font-size:40px;font-weight:600;line-height:1.25;letter-spacing:-.6px;text-wrap:balance}
+.question .small{font-size:25px;line-height:1.4;opacity:.92}
+.defs{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;flex:1}
+.defs>div{display:flex;flex-direction:column;gap:12px;padding-top:22px;border-top:3px solid var(--line)}
+.defs .ic{color:var(--q-ink);width:44px;height:44px}
+.defs h4{font-size:30px}
+.defs p{margin:0;font-size:26px;line-height:1.45;color:var(--muted)}
+
+/* hipóteses */
+.h-main{display:grid;grid-template-columns:1fr 1fr;flex:none;border:2px solid var(--line);border-radius:24px;background:var(--card)}
+.hm{display:flex;gap:20px;align-items:center;padding:20px 32px}
+.hm+.hm{border-left:2px solid var(--line)}
+.hm p{margin:0;font-size:24px;line-height:1.4;color:var(--muted)}
+.hm b{color:var(--ink);font-weight:600}
+.h-list{display:flex;flex-direction:column;flex:none}
+.h-list .tag{justify-self:start}
+.h-row{display:grid;grid-template-columns:72px 270px 1fr 400px;gap:28px;align-items:center;padding:13px 0;border-top:2px solid var(--line)}
+.h-row.lab{padding:0 0 12px;border-top:0;font-size:18px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.h-row h4{font-size:25px;margin:0}
+.h-row .st{margin:0;font-size:23px;line-height:1.4;color:var(--ink)}
+.h-row .how{margin:0;font-size:21px;line-height:1.4;color:var(--muted)}
+.tag{font-family:var(--display);font-weight:700;font-size:22px;padding:8px 14px;border-radius:12px;background:var(--card);border:2px solid var(--line);color:var(--muted);flex:none}
+.tag.q{background:var(--q);border-color:transparent;color:#FFFFFF}
+.foot{margin:0;font-size:22px;color:var(--muted);flex:none}
+.foot b{color:var(--ink);font-weight:600}
+
+/* controles */
+.bar{flex:none;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.bar button{font:600 15px var(--body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:9px 18px;cursor:pointer}
+.bar button:hover{border-color:var(--muted)}
+.bar button:focus-visible{outline:3px solid var(--q);outline-offset:2px}
+.count{font:600 15px var(--body);color:var(--muted);min-width:56px;text-align:center;font-variant-numeric:tabular-nums}
+.notes{flex:none;max-height:32vh;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 18px;font-size:16px;line-height:1.55}
+.notes b{display:block;font-size:13px;color:var(--q-ink);margin-bottom:4px}
+body.is-fs .bar{display:none}
+.speaker{display:none}
+
+/* Resultados: mesmos tons e tipografia da apresentação original. */
+.result-columns{display:grid;grid-template-columns:1fr 1fr;gap:40px;flex:1;min-height:0;align-items:stretch}
+.result-panel{background:var(--card);border:2px solid var(--line);border-radius:24px;padding:32px 36px;display:flex;flex-direction:column;gap:18px}
+.result-panel h3{font-size:28px;color:var(--ink)}
+.result-panel p{font-size:24px;line-height:1.42;margin:0;color:var(--muted)}
+.result-panel .big-number{font-family:var(--display);font-size:74px;line-height:1.05;font-weight:700;color:var(--q-ink)}
+.result-panel .big-number.classic{color:var(--c-ink)}
+.result-panel .big-number.range{font-size:52px;line-height:1.12}
+.result-panel .smallline{font-size:21px}
+.result-list{display:flex;flex-direction:column;gap:0;flex:1}
+.result-list .item{display:grid;grid-template-columns:220px 1fr;gap:30px;align-items:center;padding:23px 0;border-top:2px solid var(--line)}
+.result-list h3{font-size:27px}.result-list p{font-size:24px;line-height:1.36;color:var(--muted);margin:0}
+.result-list strong{color:var(--ink)}
+.result-quote{font-family:var(--display);font-size:47px;line-height:1.24;font-weight:600;max-width:1220px;margin:0}
+.result-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;flex:1;align-items:stretch}
+.result-strip>div{border-top:4px solid var(--q);padding:24px 5px 0}
+.result-strip h3{font-size:27px;margin-bottom:14px}
+.result-strip p{font-size:23px;line-height:1.4;color:var(--muted);margin:0}
+.result-figure{flex:1;display:flex;min-height:0;align-items:center;justify-content:center}
+.result-figure svg{width:100%;max-height:100%}
+.result-source{font-size:18px;color:var(--muted);margin:0}
+@media(max-width:600px){.bar{gap:5px}.bar button{padding:7px 10px;font-size:12px}.count{min-width:45px}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" class="f-muted"/>
+    </marker>
+    <pattern id="strip" width="60" height="40" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="24" height="40" rx="4" class="f-q" opacity=".85"/>
+      <rect x="30" y="0" width="24" height="40" rx="4" class="f-q" opacity=".35"/>
+    </pattern>
+  </defs>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-funnel" viewBox="0 0 24 24"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></symbol>
+  <symbol id="i-qubits" viewBox="0 0 24 24"><circle cx="6" cy="7" r="3"/><circle cx="18" cy="7" r="3"/><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M9 7h6M9 17h6"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17.5l9 5 9-5"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4 11a8 8 0 0 1 14-4.5L20 8M20 3v5h-5M20 13a8 8 0 0 1-14 4.5L4 16M4 21v-5h5"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 20h18M7 16v-5M12 16V6M17 16v-8"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+  <symbol id="i-equal" viewBox="0 0 24 24"><path d="M5 9h14M5 15h14"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></symbol>
+</svg>
+
+<div class="viewport" id="viewport">
+<main class="stage" id="stage" aria-live="polite">
+  <div class="progress" id="progress"></div>
+
+  <!-- 1 capa -->
+  <section class="slide cover active" aria-label="Capa">
+    <header>
+      <h1>Kernel quântico vs. kernel clássico</h1>
+      <p class="lede">O mesmo classificador SVM com duas formas de medir semelhança entre frases, lendo avaliações em português e em inglês.</p>
+      <p class="author"><b>Júlia Alves</b>, Ciência da Computação, Inteli</p>
+    </header>
+    <div class="figure">
+      <svg viewBox="0 0 1440 330" role="img" aria-label="Uma frase passa por um modelo de linguagem, vira um embedding e segue para um kernel quântico e um kernel clássico, que decidem se ela é positiva ou negativa">
+        <rect x="0" y="105" width="270" height="90" rx="45" class="f-card st-line"/>
+        <text x="135" y="159" text-anchor="middle" class="t tb">Adorei o produto!</text>
+        <path d="M282 150H340" class="arrow"/>
+        <rect x="355" y="78" width="190" height="40" rx="10" class="f-ink" opacity=".95"/>
+        <rect x="355" y="130" width="190" height="40" rx="10" class="f-ink" opacity=".75"/>
+        <rect x="355" y="182" width="190" height="40" rx="10" class="f-ink" opacity=".55"/>
+        <text x="450" y="272" text-anchor="middle" class="ts">modelo de linguagem</text>
+        <path d="M557 150H615" class="arrow"/>
+        <rect x="630" y="122" width="290" height="56" fill="url(#strip)"/>
+        <text x="775" y="272" text-anchor="middle" class="ts">embedding</text>
+        <path d="M935 150C975 150 975 75 1000 75" class="ln st-muted"/>
+        <path d="M935 150C975 150 975 225 1000 225" class="ln st-muted"/>
+        <rect x="1000" y="40" width="230" height="70" rx="35" class="f-qs"/>
+        <text x="1115" y="83" text-anchor="middle" class="t tb tq">kernel quântico</text>
+        <rect x="1000" y="190" width="230" height="70" rx="35" class="f-cs"/>
+        <text x="1115" y="233" text-anchor="middle" class="t tb tc">kernel clássico</text>
+        <path d="M1240 75C1275 75 1275 150 1295 150" class="arrow"/>
+        <path d="M1240 225C1275 225 1275 150 1295 150" class="arrow"/>
+        <rect x="1300" y="110" width="140" height="80" rx="20" class="f-card ln st-ink"/>
+        <text x="1370" y="159" text-anchor="middle" class="t tb">SVM</text>
+        <text x="1370" y="246" text-anchor="middle" class="ts">positivo ou</text>
+        <text x="1370" y="272" text-anchor="middle" class="ts">negativo?</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--q)"></i>quântico</span>
+      <span><i class="dot" style="background:var(--c)"></i>clássico</span>
+    </div>
+    <div class="speaker">Critério: escopo e relevância. A proposta em uma frase: colocar um classificador quântico e um clássico lado a lado, em condições justas, para descobrir se a vantagem que alguns artigos relatam vem do circuito quântico ou da forma como a comparação foi feita. O desenho resume o trabalho inteiro: uma avaliação passa por um modelo de linguagem, vira um embedding, a semelhança entre frases é medida por um kernel quântico ou por um kernel clássico, e um SVM decide se ela é positiva ou negativa. O título do artigo é Quantum Kernel versus Tuned Classical SVM. QSVM é o nome usado no artigo e na literatura para um SVM que usa um kernel quântico: o algoritmo do SVM continua clássico, só a medida de semelhança vem do circuito. A cor roxa sempre indica o lado quântico e o cinza-azulado, o clássico.</div>
+  </section>
+
+  <!-- 2 LLM e embeddings -->
+
+
+  <!-- 3 compressão -->
+  <section class="slide" aria-label="Compressão">
+    <header>
+      <h2>Comprimir para caber no circuito</h2>
+      <p class="lede"><b>Comprimir</b> é reduzir o vetor do embedding, que no modelo usado tem 384 dimensões, para só 4, 8 ou 12, perdendo o mínimo de informação. Cada dimensão que sobra vai para um qubit, e o circuito simulável hoje tem poucos qubits.</p>
+    </header>
+    <div class="figure">
+      <svg viewBox="0 0 1440 560" role="img" aria-label="Um vetor de 384 dimensões é afunilado até quatro dimensões, uma por qubit. Abaixo, o PCA mistura as frases positivas e negativas, enquanto o NCA as mantém separadas">
+        <text x="0" y="22" class="ts">embedding do modelo usado (MiniLM): 384 dimensões. Modelos maiores usam 768, 1.024 ou mais</text>
+        <rect x="0" y="34" width="1440" height="40" fill="url(#strip)"/>
+        <path d="M0 82H1440L846 196H594Z" class="f-qs"/>
+        <text x="720" y="140" text-anchor="middle" class="t tb tq">compressão</text>
+        <g class="f-q">
+          <rect x="621" y="214" width="36" height="36" rx="6"/><rect x="673" y="214" width="36" height="36" rx="6" opacity=".6"/><rect x="725" y="214" width="36" height="36" rx="6" opacity=".85"/><rect x="777" y="214" width="36" height="36" rx="6" opacity=".4"/>
+        </g>
+        <text x="836" y="240" class="t tb tq">4 dimensões, uma por qubit</text>
+        <text x="584" y="240" text-anchor="end" class="ts">a mesma frase, em versão curta</text>
+
+        <rect x="0" y="290" width="700" height="270" rx="28" class="f-card st-line"/>
+        <text x="36" y="336" class="t tb">PCA</text>
+        <text x="36" y="366" class="ts">comprime sem saber qual frase é positiva</text>
+        <g>
+          <circle cx="80" cy="452" r="10" class="pos"/><circle cx="122" cy="478" r="9" class="neg"/><circle cx="160" cy="440" r="9" class="neg"/><circle cx="204" cy="470" r="10" class="pos"/><circle cx="246" cy="446" r="10" class="pos"/><circle cx="286" cy="482" r="9" class="neg"/><circle cx="326" cy="452" r="10" class="pos"/><circle cx="368" cy="474" r="9" class="neg"/><circle cx="408" cy="442" r="9" class="neg"/><circle cx="450" cy="470" r="10" class="pos"/><circle cx="492" cy="450" r="9" class="neg"/><circle cx="532" cy="480" r="10" class="pos"/><circle cx="574" cy="446" r="9" class="neg"/><circle cx="616" cy="470" r="10" class="pos"/>
+        </g>
+        <text x="36" y="534" class="ts">guarda o que mais varia, mas as classes podem se misturar</text>
+
+        <rect x="740" y="290" width="700" height="270" rx="28" class="f-card st-line"/>
+        <text x="776" y="336" class="t tb">NCA</text>
+        <text x="776" y="366" class="ts">comprime usando o rótulo de cada frase</text>
+        <g class="pos">
+          <circle cx="810" cy="452" r="10"/><circle cx="850" cy="478" r="10"/><circle cx="886" cy="440" r="10"/><circle cx="926" cy="470" r="10"/><circle cx="962" cy="446" r="10"/><circle cx="1000" cy="478" r="10"/><circle cx="1036" cy="452" r="10"/>
+        </g>
+        <path d="M1090 410V505" class="ln st-q dash"/>
+        <g class="neg">
+          <circle cx="1146" cy="450" r="9"/><circle cx="1184" cy="476" r="9"/><circle cx="1220" cy="442" r="9"/><circle cx="1258" cy="472" r="9"/><circle cx="1296" cy="448" r="9"/><circle cx="1334" cy="478" r="9"/><circle cx="1372" cy="452" r="9"/>
+        </g>
+        <text x="776" y="534" class="ts">procura manter positivas e negativas separadas</text>
+      </svg>
+    </div>
+    <div class="speaker">Compressão é redução de dimensionalidade: o embedding tem 384 números e o circuito recebe um número por qubit, então ele precisa virar uma lista de 4, 8 ou 12 números. O PCA, análise de componentes principais, é não supervisionado: encontra as direções em que os dados mais variam e projeta neles, sem olhar os rótulos. O NCA, neighbourhood components analysis, é supervisionado: aprende uma projeção que deixa os vizinhos de cada frase com o mesmo rótulo. Bowles e coautores lembram que esse pré-processamento pode mudar a dificuldade do problema, por isso testamos os dois. A compressão é aprendida só nos dados de treino de cada divisão, para que o teste não vaze. Isso corresponde à hipótese H3.</div>
+  </section>
+
+  <!-- 4 kernel -->
+  <section class="slide" aria-label="O que é um kernel">
+    <header>
+      <h2>O que é um kernel</h2>
+      <p class="lede">Classificadores como o SVM dependem de uma medida de semelhança entre frases. Essa medida é o <b>kernel</b>, e o kernel quântico é outra forma de calculá-la.</p>
+    </header>
+    <div class="figure">
+      <svg viewBox="0 0 1440 370" role="img" aria-label="Os embeddings comprimidos das frases A e B entram no kernel, que devolve uma nota de 0 a 1. O kernel é calculado para cada par de frases do treino, formando uma tabela de semelhanças">
+        <rect x="0" y="40" width="190" height="60" rx="30" class="f-card st-line"/>
+        <text x="95" y="78" text-anchor="middle" class="t">frase A</text>
+        <path d="M198 70H232" class="arrow"/>
+        <g class="f-q"><rect x="244" y="42" width="28" height="56" rx="5" opacity=".9"/><rect x="278" y="42" width="28" height="56" rx="5" opacity=".4"/><rect x="312" y="42" width="28" height="56" rx="5" opacity=".7"/><rect x="346" y="42" width="28" height="56" rx="5" opacity=".25"/></g>
+        <rect x="0" y="160" width="190" height="60" rx="30" class="f-card st-line"/>
+        <text x="95" y="198" text-anchor="middle" class="t">frase B</text>
+        <path d="M198 190H232" class="arrow"/>
+        <g class="f-q"><rect x="244" y="162" width="28" height="56" rx="5" opacity=".85"/><rect x="278" y="162" width="28" height="56" rx="5" opacity=".45"/><rect x="312" y="162" width="28" height="56" rx="5" opacity=".65"/><rect x="346" y="162" width="28" height="56" rx="5" opacity=".3"/></g>
+        <text x="309" y="262" text-anchor="middle" class="ts">embeddings comprimidos</text>
+        <text x="309" y="288" text-anchor="middle" class="ts">(4, 8 ou 12 dimensões)</text>
+        <path d="M386 70C420 70 420 112 446 116" class="arrow"/>
+        <path d="M386 190C420 190 420 148 446 144" class="arrow"/>
+        <rect x="456" y="70" width="170" height="120" rx="22" class="f-ink"/>
+        <text x="541" y="124" text-anchor="middle" class="t tb tp">kernel</text>
+        <text x="541" y="154" text-anchor="middle" class="ts tp" opacity=".75">K(A, B)</text>
+        <path d="M636 130H672" class="arrow"/>
+        <text x="686" y="148" class="tq" style="font-size:54px;font-family:var(--display);font-weight:700">0,82</text>
+        <text x="686" y="188" class="ts">nota de 0 a 1</text>
+        <text x="686" y="216" class="ts">1 = idênticas</text>
+
+        <g>
+          <circle cx="978" cy="26" r="7" class="pos"/><circle cx="1018" cy="26" r="7" class="pos"/><circle cx="1058" cy="26" r="7" class="pos"/><circle cx="1098" cy="26" r="6" class="neg"/><circle cx="1138" cy="26" r="6" class="neg"/><circle cx="1178" cy="26" r="6" class="neg"/>
+          <circle cx="944" cy="62" r="7" class="pos"/><circle cx="944" cy="102" r="7" class="pos"/><circle cx="944" cy="142" r="7" class="pos"/><circle cx="944" cy="182" r="6" class="neg"/><circle cx="944" cy="222" r="6" class="neg"/><circle cx="944" cy="262" r="6" class="neg"/>
+        </g>
+        <g class="f-q">
+          <rect x="960" y="44" width="36" height="36" rx="5" opacity="1"/><rect x="1000" y="44" width="36" height="36" rx="5" opacity=".8"/><rect x="1040" y="44" width="36" height="36" rx="5" opacity=".75"/><rect x="1080" y="44" width="36" height="36" rx="5" opacity=".15"/><rect x="1120" y="44" width="36" height="36" rx="5" opacity=".1"/><rect x="1160" y="44" width="36" height="36" rx="5" opacity=".2"/>
+          <rect x="960" y="84" width="36" height="36" rx="5" opacity=".8"/><rect x="1000" y="84" width="36" height="36" rx="5" opacity="1"/><rect x="1040" y="84" width="36" height="36" rx="5" opacity=".85"/><rect x="1080" y="84" width="36" height="36" rx="5" opacity=".1"/><rect x="1120" y="84" width="36" height="36" rx="5" opacity=".2"/><rect x="1160" y="84" width="36" height="36" rx="5" opacity=".15"/>
+          <rect x="960" y="124" width="36" height="36" rx="5" opacity=".75"/><rect x="1000" y="124" width="36" height="36" rx="5" opacity=".85"/><rect x="1040" y="124" width="36" height="36" rx="5" opacity="1"/><rect x="1080" y="124" width="36" height="36" rx="5" opacity=".2"/><rect x="1120" y="124" width="36" height="36" rx="5" opacity=".15"/><rect x="1160" y="124" width="36" height="36" rx="5" opacity=".1"/>
+          <rect x="960" y="164" width="36" height="36" rx="5" opacity=".15"/><rect x="1000" y="164" width="36" height="36" rx="5" opacity=".1"/><rect x="1040" y="164" width="36" height="36" rx="5" opacity=".2"/><rect x="1080" y="164" width="36" height="36" rx="5" opacity="1"/><rect x="1120" y="164" width="36" height="36" rx="5" opacity=".8"/><rect x="1160" y="164" width="36" height="36" rx="5" opacity=".7"/>
+          <rect x="960" y="204" width="36" height="36" rx="5" opacity=".1"/><rect x="1000" y="204" width="36" height="36" rx="5" opacity=".2"/><rect x="1040" y="204" width="36" height="36" rx="5" opacity=".15"/><rect x="1080" y="204" width="36" height="36" rx="5" opacity=".8"/><rect x="1120" y="204" width="36" height="36" rx="5" opacity="1"/><rect x="1160" y="204" width="36" height="36" rx="5" opacity=".85"/>
+          <rect x="960" y="244" width="36" height="36" rx="5" opacity=".2"/><rect x="1000" y="244" width="36" height="36" rx="5" opacity=".15"/><rect x="1040" y="244" width="36" height="36" rx="5" opacity=".1"/><rect x="1080" y="244" width="36" height="36" rx="5" opacity=".7"/><rect x="1120" y="244" width="36" height="36" rx="5" opacity=".85"/><rect x="1160" y="244" width="36" height="36" rx="5" opacity="1"/>
+        </g>
+        <rect x="999" y="43" width="38" height="38" rx="6" class="ln st-ink"/>
+        <path d="M1037 62H1206" class="ln st-ink" style="stroke-width:2"/>
+        <text x="1214" y="70" class="t tb">K(T1, T2)</text>
+        <text x="1214" y="100" class="ts">nota entre as frases</text>
+        <text x="1214" y="126" class="ts">de treino 1 e 2</text>
+        <text x="1078" y="320" text-anchor="middle" class="t tb">tabela de semelhanças</text>
+        <text x="1078" y="348" text-anchor="middle" class="ts">uma nota para cada par de frases do treino</text>
+
+      </svg>
+    </div>
+    <div class="callouts two">
+      <div class="cl"><h4>Kernel clássico (RBF)</h4><p>A nota vem da distância entre os dois vetores comprimidos.</p></div>
+      <div><h4>Kernel quântico</h4><p>A nota vem de um circuito quântico que recebe os mesmos vetores comprimidos.</p></div>
+    </div>
+    <div class="speaker">Este slide liga a compressão ao classificador. O kernel não recebe a frase em texto: recebe o embedding comprimido de cada frase, com 4, 8 ou 12 dimensões, e devolve uma nota de semelhança, K(A, B), entre 0 e 1. No treino, essa nota é calculada para todos os pares de frases do treino, e isso forma a tabela de semelhanças, também chamada matriz de kernel: a linha i e a coluna j guardam a nota entre a frase de treino i e a frase de treino j. O ponto central: classificadores por kernel dependem de uma medida de semelhança, e o kernel quântico é uma alternativa para calculá-la. Ele não resolve a compressão; ao contrário, depende dela, porque só recebe o vetor já comprimido. Essa matriz de semelhanças é usada pelo SVM para aprender a separação entre classes. O 0,82 é só um exemplo.</div>
+  </section>
+
+  <!-- 5 da nota à classe -->
+
+
+  <!-- 6 duas réguas -->
+  <section class="slide" aria-label="Distância ou giros de qubits">
+    <header>
+      <h2>Distância ou giros de qubits</h2>
+      <p class="lede">Os dois kernels recebem exatamente o mesmo vetor comprimido. O que muda é como a semelhança entre duas frases é medida.</p>
+    </header>
+    <div class="figure">
+      <svg viewBox="0 0 1440 400" role="img" aria-label="À esquerda, o kernel clássico trata cada frase como um ponto e mede a distância entre eles. À direita, o kernel quântico transforma cada dimensão no giro de um qubit e compara os giros das duas frases">
+        <rect x="0" y="0" width="700" height="400" rx="28" class="f-cs"/>
+        <text x="36" y="52" class="t tb tc" style="font-size:28px">Kernel clássico (RBF)</text>
+        <text x="36" y="86" class="ts">cada frase é um ponto no espaço</text>
+        <path d="M80 340V120M80 340H660" class="ln st-muted" style="stroke-width:2"/>
+        <path d="M232 284L458 176" class="ln st-c dash"/>
+        <circle cx="220" cy="290" r="14" class="f-ink"/>
+        <circle cx="470" cy="170" r="14" class="f-ink"/>
+        <text x="200" y="330" class="t">frase A</text>
+        <text x="492" y="176" class="t">frase B</text>
+        <text x="372" y="272" class="t tb tc">distância</text>
+        <text x="36" y="384" class="ts">nota = exp(−γ · distância²): perto dá nota alta</text>
+
+        <rect x="740" y="0" width="700" height="400" rx="28" class="f-qs"/>
+        <text x="776" y="52" class="t tb tq" style="font-size:28px">Kernel quântico (fidelidade)</text>
+        <text x="776" y="86" class="ts">cada dimensão vira o giro de um qubit</text>
+        <g class="ts" text-anchor="middle" style="font-size:19px">
+          <text x="845" y="132">qubit 1</text><text x="1005" y="132">qubit 2</text><text x="1165" y="132">qubit 3</text><text x="1325" y="132">qubit 4</text>
+        </g>
+        <g class="f-card st-line"><circle cx="845" cy="200" r="55"/><circle cx="1005" cy="200" r="55"/><circle cx="1165" cy="200" r="55"/><circle cx="1325" cy="200" r="55"/></g>
+        <g class="ln st-q" style="stroke-width:5">
+          <path d="M845 200L884 177.5"/><path d="M1005 200L982.5 161"/><path d="M1165 200L1126 222.5"/><path d="M1325 200L1347.5 239"/>
+        </g>
+        <g class="ln st-c dash" style="stroke-width:4;stroke-dasharray:6 5">
+          <path d="M845 200L879.5 171.1"/><path d="M1005 200L989.6 157.7"/><path d="M1165 200L1136.1 234.5"/><path d="M1325 200L1340.4 242.3"/>
+        </g>
+        <g class="f-ink"><circle cx="845" cy="200" r="5"/><circle cx="1005" cy="200" r="5"/><circle cx="1165" cy="200" r="5"/><circle cx="1325" cy="200" r="5"/></g>
+        <g class="t tb" text-anchor="middle" style="font-size:21px">
+          <text x="845" y="286">a₁</text><text x="1005" y="286">a₂</text><text x="1165" y="286">a₃</text><text x="1325" y="286">a₄</text>
+        </g>
+        <path d="M776 330H816" class="ln st-q" style="stroke-width:5"/><text x="826" y="337" class="ts">frase A</text>
+        <path d="M940 330H980" class="ln st-c dash" style="stroke-width:4;stroke-dasharray:6 5"/><text x="990" y="337" class="ts">frase B</text>
+        <text x="776" y="384" class="ts">nota = o quanto os estados de A e B coincidem</text>
+      </svg>
+    </div>
+    <div class="callouts">
+      <div><h4>O que o quântico pode trazer</h4><p>O estado de n qubits vive num espaço de 2ⁿ dimensões, e as portas ZZ combinam pares de dimensões. Isso pode separar padrões que a distância simples não separa.</p></div>
+      <div><h4>O risco</h4><p>Em certas condições, os valores do kernel podem ficar muito parecidos e perder contraste. Esse comportamento depende da largura de banda.</p></div>
+      <div><h4>O que vamos medir</h4><p>Se, com os mesmos dados e o mesmo ajuste, essa régua leva a um F1-macro diferente da régua da distância.</p></div>
+    </div>
+    <div class="speaker">Este é o centro da proposta. Os dois modelos recebem o mesmo vetor comprimido e usam o mesmo SVM; só a régua de semelhança muda. No kernel clássico RBF, cada frase é um ponto e a nota é exp(−gamma vezes a distância euclidiana ao quadrado): pontos próximos dão nota perto de 1. Atenção: é distância euclidiana, não cosseno. No kernel quântico, cada dimensão do vetor comprimido vira o ângulo de giro de um qubit: o qubit 1 recebe a primeira dimensão, o qubit 2 a segunda, e assim por diante. Os círculos mostram o giro de fase de cada qubit, visto de cima, depois do Hadamard. Duas frases parecidas giram os qubits de forma parecida. Depois, as portas ZZ misturam pares de qubits, e a nota é o quanto o estado final da frase A coincide com o da frase B. Como os valores viram ângulos, a escala da compressão importa: um ângulo de 2 pi é igual a 0. Por isso existe a largura de banda, um fator que multiplica os valores antes de virarem ângulos e que é ajustado na busca em grade. O ganho possível é que o estado de n qubits vive num espaço de 2 elevado a n dimensões e o kernel captura interações entre pares de dimensões. O risco é a concentração do kernel com mais qubits. Se essa régua melhora o resultado é exatamente o que o experimento mede, pelo F1-macro.</div>
+  </section>
+
+  <!-- 6 circuito quântico -->
+  <section class="slide" aria-label="Onde entra a computação quântica">
+    <header>
+      <h2>Onde entra a computação quântica</h2>
+      <p class="lede">Só no cálculo da nota. Cada frase comprimida vira um circuito, e a chance de o circuito voltar ao ponto de partida diz o quanto duas frases se parecem.</p>
+    </header>
+    <div class="figure">
+      <svg viewBox="0 0 1440 400" role="img" aria-label="Circuito de quatro qubits: Hadamard, rotações com os números da frase A, portas ZZ entre pares de qubits, o circuito da frase B invertido e a medição. A chance de medir 0000 é alta para frases parecidas e baixa para frases diferentes">
+        <g class="f-qs">
+          <rect x="70" y="40" width="130" height="300" rx="16" opacity=".7"/>
+          <rect x="215" y="40" width="180" height="300" rx="16" opacity=".7"/>
+          <rect x="410" y="40" width="230" height="300" rx="16" opacity=".7"/>
+          <rect x="655" y="40" width="190" height="300" rx="16" opacity=".7"/>
+          <rect x="860" y="40" width="90" height="300" rx="16" opacity=".7"/>
+        </g>
+        <text x="135" y="26" text-anchor="middle" class="ts tb tq" style="font-size:20px">1 Hadamard</text>
+        <text x="305" y="26" text-anchor="middle" class="ts tb tq" style="font-size:20px">2 Números da frase A</text>
+        <text x="525" y="26" text-anchor="middle" class="ts tb tq" style="font-size:20px">3 Emaranhamento</text>
+        <text x="750" y="26" text-anchor="middle" class="ts tb tq" style="font-size:20px">4 Frase B invertida</text>
+        <text x="905" y="26" text-anchor="middle" class="ts tb tq" style="font-size:20px">5 Medir</text>
+        <g class="ts" style="font-size:20px">
+          <text x="0" y="97">|0⟩</text><text x="0" y="157">|0⟩</text><text x="0" y="217">|0⟩</text><text x="0" y="277">|0⟩</text>
+        </g>
+        <path d="M44 90H960M44 150H960M44 210H960M44 270H960" class="ln st-muted" style="stroke-width:2"/>
+        <g>
+          <rect x="113" y="68" width="44" height="44" rx="8" class="f-card ln st-q"/><rect x="113" y="128" width="44" height="44" rx="8" class="f-card ln st-q"/><rect x="113" y="188" width="44" height="44" rx="8" class="f-card ln st-q"/><rect x="113" y="248" width="44" height="44" rx="8" class="f-card ln st-q"/>
+        </g>
+        <g class="t tb tq" text-anchor="middle"><text x="135" y="99">H</text><text x="135" y="159">H</text><text x="135" y="219">H</text><text x="135" y="279">H</text></g>
+        <g class="f-q">
+          <rect x="270" y="68" width="70" height="44" rx="8"/><rect x="270" y="128" width="70" height="44" rx="8"/><rect x="270" y="188" width="70" height="44" rx="8"/><rect x="270" y="248" width="70" height="44" rx="8"/>
+        </g>
+        <g class="t tb" text-anchor="middle" style="fill:#FFFFFF"><text x="305" y="99">a₁</text><text x="305" y="159">a₂</text><text x="305" y="219">a₃</text><text x="305" y="279">a₄</text></g>
+        <rect x="430" y="68" width="56" height="104" rx="10" class="f-card ln st-q"/>
+        <rect x="497" y="128" width="56" height="104" rx="10" class="f-card ln st-q"/>
+        <rect x="564" y="188" width="56" height="104" rx="10" class="f-card ln st-q"/>
+        <g class="t tb tq" text-anchor="middle"><text x="458" y="129">ZZ</text><text x="525" y="189">ZZ</text><text x="592" y="249">ZZ</text></g>
+        <rect x="675" y="62" width="150" height="236" rx="16" class="f-ink"/>
+        <text x="750" y="172" text-anchor="middle" class="t tb tp">frase B</text>
+        <text x="750" y="202" text-anchor="middle" class="ts tp" opacity=".8">ao contrário</text>
+        <g>
+          <rect x="882" y="70" width="46" height="40" rx="8" class="f-card st-line"/><rect x="882" y="130" width="46" height="40" rx="8" class="f-card st-line"/><rect x="882" y="190" width="46" height="40" rx="8" class="f-card st-line"/><rect x="882" y="250" width="46" height="40" rx="8" class="f-card st-line"/>
+        </g>
+        <path d="M892 102a13 13 0 0 1 26 0M905 102l8-14M892 162a13 13 0 0 1 26 0M905 162l8-14M892 222a13 13 0 0 1 26 0M905 222l8-14M892 282a13 13 0 0 1 26 0M905 282l8-14" class="ln st-ink" style="stroke-width:2"/>
+        <text x="905" y="372" text-anchor="middle" class="ts" style="font-size:20px">deu 0000?</text>
+
+        <text x="1010" y="84" class="t tb">Chance de medir 0000</text>
+        <text x="1010" y="146" class="ts">frases parecidas</text>
+        <rect x="1010" y="160" width="420" height="30" rx="15" class="f-card st-line"/>
+        <rect x="1010" y="160" width="360" height="30" rx="15" class="f-q"/>
+        <text x="1010" y="238" class="ts">frases diferentes</text>
+        <rect x="1010" y="252" width="420" height="30" rx="15" class="f-card st-line"/>
+        <rect x="1010" y="252" width="46" height="30" rx="15" class="f-q"/>
+        <text x="1010" y="342" class="t tb tq">essa chance é a nota do kernel</text>
+      </svg>
+    </div>
+    <div class="callouts">
+      <div><h4>Hadamard</h4><p>Tira cada qubit do 0 e o coloca em superposição, uma mistura de 0 e 1. Depois, as rotações gravam os números da frase nessa mistura.</p></div>
+      <div><h4>Emaranhamento</h4><p>As portas ZZ ligam os qubits em pares, com ângulos que dependem de duas dimensões ao mesmo tempo. É o circuito proposto por Havlíček e coautores (2019), referência na literatura.</p></div>
+      <div><h4>Medir muitas vezes</h4><p>No simulador, estimamos cada entrada com 1.000 shots. Também calculamos o valor exato e simulamos ruído.</p></div>
+    </div>
+    <div class="speaker">Esta é a parte quântica do trabalho. O circuito é o ZZ feature map de Havlícek e coautores, publicado na Nature em 2019. Começa com todos os qubits em 0. Passo 1: uma porta Hadamard em cada qubit, que leva cada um para uma superposição igual de 0 e 1. Passo 2: uma rotação de fase em cada qubit, com ângulo dado pelo número correspondente da frase comprimida; o qubit 1 recebe o primeiro número, o qubit 2 o segundo, e assim por diante. Passo 3: para pares de qubits, uma porta ZZ, que é feita com CNOT, rotação de fase e CNOT, com ângulo que depende dos dois números ao mesmo tempo, (pi menos a_i) vezes (pi menos a_j). Isso emaranha os qubits. Os passos de 1 a 3 formam o estado da frase A e podem se repetir. Passo 4: aplicamos o circuito da frase B de trás para frente. No cenário ideal, se A e B forem iguais, o circuito inverso desfaz o primeiro e o sistema volta ao estado inicial; o resultado mede a fidelidade entre os estados, sem garantir que a semelhança acompanhe a distância entre os textos. Passo 5: medimos. A probabilidade de medir 0000 é a fidelidade entre os dois estados, o módulo ao quadrado do produto interno, e essa é a nota do kernel. A largura de banda do kernel é um fator que multiplica os números antes de virarem ângulos, e é ajustada junto com o C do SVM. O controle sem emaranhamento é o mesmo circuito sem o passo 3, em que cada qubit fica independente. Se não detectarmos diferença entre as versões, isso não prova equivalência nem ausência de contribuição do emaranhamento. Três cenários: valor exato pelo vetor de estado, estimativa com 1.000 medições por par de frases, e ruído despolarizante com 4 e 8 qubits.</div>
+  </section>
+
+  <!-- 6 originalidade + bases -->
+  <section class="slide" aria-label="O que é inovador">
+    <header>
+      <h2>Por que comparar de novo?</h2>
+      <p class="lede">Bowles et al. (2024) leram 55 artigos e cerca de 40% diziam que o quântico vence. Depois, eles mesmos testaram 12 modelos quânticos em 160 bases, e no geral o clássico se saiu melhor.</p>
+    </header>
+    <div class="figure">
+      <svg viewBox="0 0 1440 330" role="img" aria-label="À esquerda, estudos anteriores dão ao modelo quântico e ao clássico condições diferentes. À direita, este trabalho dá aos dois os mesmos dados e o mesmo ajuste">
+        <text x="0" y="28" class="t tb">Como alguns estudos compararam</text>
+        <rect x="0" y="56" width="300" height="250" rx="24" class="f-qs"/>
+        <text x="30" y="104" class="t tb tq" style="font-size:28px">Quântico</text>
+        <circle cx="38" cy="160" r="6" class="f-q"/><text x="56" y="168" class="t">vetor comprimido</text>
+        <text x="350" y="205" text-anchor="middle" class="f-muted" style="font-size:64px;font-family:var(--display);font-weight:600">≠</text>
+        <rect x="400" y="56" width="300" height="250" rx="24" class="f-cs"/>
+        <text x="430" y="104" class="t tb tc" style="font-size:28px">Clássico</text>
+        <circle cx="438" cy="160" r="6" class="f-c"/><text x="456" y="168" class="t">vetor completo</text>
+        <circle cx="438" cy="214" r="6" class="f-c"/><text x="456" y="222" class="t">ou sem ajuste</text>
+
+        <rect x="740" y="0" width="700" height="330" rx="28" class="f-none ln st-q"/>
+        <text x="772" y="44" class="t tb tq">Como este trabalho compara</text>
+        <rect x="772" y="68" width="280" height="232" rx="24" class="f-qs"/>
+        <text x="798" y="114" class="t tb tq" style="font-size:28px">Quântico</text>
+        <circle cx="806" cy="168" r="6" class="f-q"/><text x="824" y="176" class="t">mesmo vetor</text>
+        <circle cx="806" cy="222" r="6" class="f-q"/><text x="824" y="230" class="t">mesmo ajuste</text>
+        <text x="1090" y="212" text-anchor="middle" class="tq" style="font-size:64px;font-family:var(--display);font-weight:600">=</text>
+        <rect x="1128" y="68" width="280" height="232" rx="24" class="f-cs"/>
+        <text x="1154" y="114" class="t tb tc" style="font-size:28px">Clássico</text>
+        <circle cx="1162" cy="168" r="6" class="f-c"/><text x="1180" y="176" class="t">mesmo vetor</text>
+        <circle cx="1162" cy="222" r="6" class="f-c"/><text x="1180" y="230" class="t">mesmo ajuste</text>
+      </svg>
+    </div>
+    <div class="split">
+      <div>
+        <h3>O que este trabalho traz de novo</h3>
+        <ul class="novel">
+          <li><svg class="ic"><use href="#i-equal"/></svg>Mesmos dados para os dois</li>
+          <li><svg class="ic"><use href="#i-sliders"/></svg>Clássico ajustado e sem ajuste</li>
+          <li><svg class="ic"><use href="#i-funnel"/></svg>Compressão com e sem rótulos</li>
+          <li><svg class="ic"><use href="#i-qubits"/></svg>O que muda com mais qubits</li>
+          <li><svg class="ic"><use href="#i-globe"/></svg>Textos em português</li>
+        </ul>
+      </div>
+      <div>
+        <h3>As bases de dados</h3>
+        <div class="base-row">
+          <div class="base"><h4>Yelp</h4><span class="lang">inglês</span><p>996 frases após remover 4 duplicatas; avaliações positivas e negativas.</p></div>
+          <div class="base"><h4>RePro</h4><span class="lang">português</span><p>Avaliações de produtos de e-commerce. Usamos 500 positivas e 500 negativas.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="speaker">Critério: originalidade. Bowles e coautores revisaram 55 artigos e cerca de 40% diziam que o quântico supera o clássico, mas ao testar 12 modelos quânticos em 160 bases, os clássicos se saíram melhor no geral. Nos estudos de texto: Hassan e coautores comprimem os embeddings para o classificador quântico, mas comparam com um modelo clássico que usou os embeddings sem compressão, ou seja, com todas as dimensões; os próprios autores dizem que falta comparar os dois sobre as mesmas representações. Cajas Ordóñez relata ganho de até 8% contra um SVM com hiperparâmetros fixos. Djemmal usa uma referência quântica perto de 50% de acurácia, que praticamente prevê uma só classe. A originalidade aqui é o desenho da comparação: os dois lados recebem as mesmas features e os modelos ajustados seguem o mesmo procedimento de busca, com grades próprias. As bases: a Yelp tinha 1.000 frases; depois da remoção de quatro duplicatas, ficaram 996. A RePro foi construída a partir do corpus B2W-Reviews01 e tem quatro rótulos; mantenho só positivo e negativo, 500 de cada, e priorizo avaliações de tamanho parecido com as frases da Yelp. Na revisão feita, não apareceu nenhuma comparação desse tipo com texto em português.</div>
+  </section>
+
+  <!-- 7 pergunta -->
+  <section class="slide" aria-label="Pergunta central" style="gap:40px">
+    <header><h2>A pergunta central</h2></header>
+    <div class="question">
+      <p class="big">Quando o QSVM e um SVM clássico bem ajustado recebem exatamente as mesmas frases comprimidas, eles acertam de forma diferente?</p>
+      <p class="small">E essa diferença muda se o SVM clássico não for ajustado, ou se a compressão usar os rótulos das frases?</p>
+    </div>
+    <div class="defs">
+      <div><svg class="ic"><use href="#i-qubits"/></svg><h4>Quem compete</h4><p>O mesmo SVM com duas réguas: kernel quântico (QSVM) e kernel RBF.</p></div>
+      <div><svg class="ic"><use href="#i-db"/></svg><h4>Com quais dados</h4><p>As mesmas frases, em português e inglês, comprimidas para 4, 8 e 12 dimensões.</p></div>
+      <div><svg class="ic"><use href="#i-target"/></svg><h4>Como medimos</h4><p>F1-macro, a média do F1 das classes positiva e negativa.</p></div>
+      <div><svg class="ic"><use href="#i-sliders"/></svg><h4>O que é justo</h4><p>Os parâmetros dos dois são escolhidos pelo mesmo procedimento de busca.</p></div>
+    </div>
+    <div class="speaker">Critério: pergunta de pesquisa. A versão formal, como está no artigo: em embeddings de sentenças em português e em inglês, comprimidos para 4, 8 e 12 dimensões, um QSVM com kernel quântico de fidelidade apresenta F1-macro diferente de um SVM-RBF ajustado pelo mesmo procedimento e treinado sobre as mesmas features, e essa diferença muda quando o SVM-RBF usa a configuração padrão ou quando a compressão usa ou não os rótulos? Os quatro blocos de baixo definem cada termo. Ajustado quer dizer busca em grade: no SVM-RBF, C e gamma; no QSVM, C e a largura de banda do kernel; a versão padrão do SVM usa C igual a 1 e gamma scale. O F1-macro é a média do F1 de cada classe, calculado a partir de precisão e recall.</div>
+  </section>
+
+  <!-- 10 metodologia -->
+  <section class="slide" aria-label="Como o teste funciona">
+    <header>
+      <h2>Como o teste funciona</h2>
+      <p class="lede">Cada modelo aprende com uma parte das frases e é avaliado nas frases que nunca viu. Tudo é igual para os dois lados.</p>
+    </header>
+    <div class="figure">
+      <svg viewBox="0 0 1440 540" role="img" aria-label="As frases de uma base são divididas em cinco blocos, quatro de treino e um de teste. Em cada rodada, a compressão é aprendida no treino, cinco modelos são treinados, o teste é previsto e o F1-macro é calculado. Ao final, o F1 do QSVM e do SVM é comparado nas mesmas rodadas">
+        <text x="0" y="24" class="t tb">996 ou 1.000 textos por base</text>
+        <g class="f-qs"><rect x="0" y="40" width="172" height="56" rx="12"/><rect x="182" y="40" width="172" height="56" rx="12"/><rect x="364" y="40" width="172" height="56" rx="12"/><rect x="546" y="40" width="172" height="56" rx="12"/></g>
+        <rect x="728" y="40" width="172" height="56" rx="12" class="f-ink"/>
+        <g class="t tb tq" text-anchor="middle" style="font-size:22px"><text x="86" y="76">treino</text><text x="268" y="76">treino</text><text x="450" y="76">treino</text><text x="632" y="76">treino</text></g>
+        <text x="814" y="76" text-anchor="middle" class="t tb tp" style="font-size:22px">teste</text>
+        <text x="950" y="62" class="t tb">5 divisões × 10 sorteios</text>
+        <text x="950" y="92" class="ts">50 rodadas; cada bloco vira teste uma vez</text>
+
+        <rect x="0" y="150" width="300" height="250" rx="24" class="f-card st-line"/>
+        <text x="28" y="196" class="t tb">Comprimir</text>
+        <text x="28" y="236" class="ts">PCA ou NCA, para</text>
+        <text x="28" y="264" class="ts">4, 8 ou 12 dimensões,</text>
+        <text x="28" y="292" class="ts">aprendido só com</text>
+        <text x="28" y="320" class="ts">o treino</text>
+        <path d="M308 275H334" class="arrow"/>
+        <rect x="346" y="150" width="420" height="250" rx="24" class="f-card st-line"/>
+        <text x="374" y="196" class="t tb">Treinar os modelos</text>
+        <circle cx="384" cy="232" r="6" class="f-q"/><text x="400" y="239" class="t" style="font-size:22px">QSVM (kernel quântico)</text>
+        <circle cx="384" cy="272" r="6" class="f-q"/><text x="400" y="279" class="t" style="font-size:22px">QSVM sem emaranhamento</text>
+        <circle cx="384" cy="312" r="6" class="f-c"/><text x="400" y="319" class="t" style="font-size:22px">SVM-RBF ajustado e padrão</text>
+        <circle cx="384" cy="352" r="6" class="f-c"/><text x="400" y="359" class="t" style="font-size:22px">Regressão logística</text>
+        <path d="M774 275H800" class="arrow"/>
+        <rect x="812" y="150" width="290" height="250" rx="24" class="f-card st-line"/>
+        <text x="840" y="196" class="t tb">Prever o teste</text>
+        <text x="840" y="236" class="ts">cada frase do teste</text>
+        <text x="840" y="264" class="ts">vira positiva</text>
+        <text x="840" y="292" class="ts">ou negativa</text>
+        <path d="M1110 275H1136" class="arrow"/>
+        <rect x="1148" y="150" width="292" height="250" rx="24" class="f-qs"/>
+        <text x="1176" y="196" class="t tb tq">F1-macro</text>
+        <text x="1176" y="236" class="ts">compara a previsão</text>
+        <text x="1176" y="264" class="ts">com o rótulo</text>
+        <text x="1176" y="292" class="ts">verdadeiro</text>
+
+        <rect x="0" y="430" width="1440" height="110" rx="24" class="f-card ln st-q"/>
+        <text x="36" y="474" class="t tb tq">Comparação final</text>
+        <text x="36" y="510" class="ts">Diferenças pareadas nas mesmas 50 divisões; teste t corrigido e ajuste de Holm.</text>
+      </svg>
+    </div>
+    <p class="foot"><b>Reprodutível:</b> código e configurações ficam abertos para qualquer pessoa repetir o experimento.</p>
+    <div class="speaker">Critérios: metodologia, correção técnica e reprodutibilidade. A Yelp tem 996 frases e a RePro 1.000 avaliações. Usamos validação cruzada com 5 divisões: em cada rodada, 4 blocos treinam e 1 testa, e todos os blocos viram teste uma vez. Isso é repetido com 10 sorteios diferentes, 50 rodadas no total. Em cada divisão externa e interna, a padronização e a compressão são ajustadas somente no respectivo treino. Os modelos treinados são: o QSVM, o QSVM sem emaranhamento como controle, o SVM-RBF ajustado e na configuração padrão, e a regressão logística. Os modelos ajustados usam busca em grade: C e gamma no SVM-RBF, C e largura de banda no QSVM e C na regressão logística. O SVM padrão mantém seus parâmetros fixos. O F1-macro sai de comparar a previsão com o rótulo verdadeiro das frases do teste. Como as 50 diferenças não são independentes, aplicamos o teste t corrigido de Nadeau e Bengio às diferenças pareadas por fold, com correção de Holm. A busca é aninhada: padronização e compressão são refeitas nos três folds internos. O kernel é calculado de forma exata, com 1.000 medições e com ruído despolarizante, este só com 4 e 8 qubits.</div>
+  </section>
+
+  <!-- 11 hipóteses -->
+  <section class="slide" aria-label="Hipóteses" style="gap:26px">
+    <header>
+      <h2>As hipóteses</h2>
+      <p class="lede">Uma pergunta principal, e quatro explicações possíveis para a diferença.</p>
+    </header>
+    <div class="h-main">
+      <div class="hm"><span class="tag">H0</span><p><b>H0.</b> Diferença média de F1-macro igual a zero nas configurações.</p></div>
+      <div class="hm"><span class="tag q">H1</span><p><b>Diferença.</b> Uma das réguas acerta mais em pelo menos uma configuração.</p></div>
+    </div>
+    <div class="h-list">
+      <div class="h-row lab"><span></span><span>O que pode explicar</span><span>Hipótese</span><span>Como testamos</span></div>
+      <div class="h-row"><span class="tag q">H2</span><h4>O ajuste do clássico</h4><p class="st">Contra um SVM sem ajuste, a vantagem do QSVM parece maior.</p><p class="how">SVM padrão contra SVM ajustado</p></div>
+      <div class="h-row"><span class="tag q">H3</span><h4>A compressão</h4><p class="st">A magnitude da diferença é menor quando a compressão usa rótulos.</p><p class="how">PCA, sem rótulos, contra NCA, com rótulos</p></div>
+      <div class="h-row"><span class="tag q">H4</span><h4>O número de qubits</h4><p class="st">Com largura fixa, a variância e o F1 tendem a cair; o ajuste pode mudar esse quadro.</p><p class="how">4, 8 e 12 qubits; kernel exato contra 1.000 medições</p></div>
+      <div class="h-row"><span class="tag q">H5</span><h4>O emaranhamento</h4><p class="st">O circuito com emaranhamento não supera significativamente o sem ZZ.</p><p class="how">QSVM com e sem as portas ZZ</p></div>
+    </div>
+    <p class="foot"><b>Interpretação:</b> não detectar diferença não prova que os modelos sejam equivalentes. O ruído é uma simulação simplificada.</p>
+    <div class="speaker">Critério: significância da contribuição. H0 propõe diferença média zero em todas as configurações; H1 propõe diferença em pelo menos uma delas. Cada uma das outras testa uma explicação diferente para vantagens quânticas relatadas. H2 vem de Cajas Ordóñez, que relatou ganho contra um SVM de hiperparâmetros fixos. H3 vem de Bowles e de Hassan, que mostram que o pré-processamento muda o problema. H4 vem da tensão entre Thanasilp, que mostra a concentração do kernel com mais qubits, e Shaydulin e Wild, que mostram que ajustar a largura de banda reduz o efeito; Maio testou isso só com 12 qubits fixos e em recuperação, não em classificação. H5 é a ablação: o mesmo circuito sem as portas ZZ. Ela compara o circuito com uma versão sem termos ZZ; uma diferença não significativa não prova ausência de contribuição; Kölle e coautores mostram que em modelos híbridos a parte clássica costuma fazer boa parte do trabalho. O ruído é tratado como análise exploratória, sem hipótese formal. Para H4: analisar a variância fora da diagonal de 2 a 16 qubits e comparar o F1 com largura fixa e ajustada em 4, 8 e 12 qubits. Limites assumidos: só simulação, bases pequenas e avaliações da RePro mais longas que as frases da Yelp. A hipótese H3 em magnitude não foi testada diretamente: o teste aplicado compara as diferenças assinadas.</div>
+  </section>
+
+  <section class="slide" aria-label="Resultado principal">
+    <header><h2>O que aconteceu na comparação principal?</h2><p class="lede">No cenário exato, QSVM e SVM-RBF ajustado ficaram próximos nas duas bases.</p></header>
+    <div class="result-columns">
+      <div class="result-panel"><h3>Yelp · inglês</h3><div class="big-number">0,914</div><p>QSVM ajustado</p><div class="big-number classic">0,914</div><p>SVM-RBF ajustado</p></div>
+      <div class="result-panel"><h3>RePro · português</h3><div class="big-number">0,949</div><p>QSVM ajustado</p><div class="big-number classic">0,949</div><p>SVM-RBF ajustado</p></div>
+    </div>
+    <p class="foot"><b>Nenhuma diferença significativa detectada</b> nas 12 configurações; isso não comprova equivalência.</p>
+    <p class="result-source">F1-macro médio no teste · médias das seis configurações, 10 seeds e 5 folds · cenário exato</p>
+    <div class="speaker">A comparação principal usa as mesmas features comprimidas e as mesmas partições. Os números do slide são médias descritivas sobre PCA e NCA com 4, 8 e 12 qubits. Na Yelp, o QSVM teve média 0,9136 e o SVM 0,9142; na RePro, 0,9485 e 0,9492. Os valores foram arredondados para três casas. Cada configuração foi testada separadamente: nenhuma diferença foi significativa após Holm. As diferenças médias por configuração variaram de aproximadamente −0,003 a +0,001. Não detectar diferença não prova equivalência.</div>
+  </section>
+  <section class="slide" aria-label="Largura de banda e generalização">
+    <header><h2>O ajuste da largura mudou o resultado</h2><p class="lede">Com b = 1, o QSVM ficou próximo de 0,50 no teste; com a largura ajustada, passou de 0,91.</p></header>
+    <div class="result-figure"><svg viewBox="0 0 1400 420" role="img" aria-label="Yelp: QSVM com largura fixa 0,51 e ajustada 0,91; RePro: largura fixa 0,51 e ajustada 0,95">
+      <text x="0" y="122" class="t tb">Yelp</text><text x="0" y="296" class="t tb">RePro</text>
+      <line x1="195" y1="112" x2="1200" y2="112" class="ln st-line"/><line x1="195" y1="286" x2="1200" y2="286" class="ln st-line"/>
+      <circle cx="403" cy="112" r="13" class="f-card ln st-c"/><circle cx="1082" cy="112" r="13" class="f-q"/>
+      <circle cx="415" cy="286" r="13" class="f-card ln st-c"/><circle cx="1143" cy="286" r="13" class="f-q"/>
+      <text x="403" y="78" text-anchor="middle" class="t tb">Fixa · 0,51</text><text x="1082" y="78" text-anchor="middle" class="t tb tq">Ajustada · 0,91</text>
+      <text x="415" y="252" text-anchor="middle" class="t tb">Fixa · 0,51</text><text x="1143" y="252" text-anchor="middle" class="t tb tq">Ajustada · 0,95</text>
+      <line x1="220" y1="360" x2="1230" y2="360" class="ln st-muted"/><text x="220" y="399" text-anchor="middle" class="ts">0,4</text><text x="558" y="399" text-anchor="middle" class="ts">0,6</text><text x="894" y="399" text-anchor="middle" class="ts">0,8</text><text x="1230" y="399" text-anchor="middle" class="ts">1,0</text>
+    </svg></div>
+    <p class="foot"><b>Com 8 e 12 qubits:</b> largura fixa teve F1 = 1,00 no treino e cerca de 0,50 no teste.</p>
+    <p class="result-source">Médias descritivas de PCA e NCA com 4, 8 e 12 qubits · eixo de F1 de 0,4 a 1,0</p>
+    <div class="speaker">A média dos seis casos é 0,5079 com largura fixa e 0,9136 com largura ajustada na Yelp; na RePro, 0,5144 e 0,9485. O contraste entre largura fixa e ajustada foi significativo nas 12 configurações, mas C também é ajustado e pode mudar entre elas. Com b igual a 1, o treino foi perfeito em todos os folds com 8 e 12 qubits, enquanto o teste ficou perto de 0,50. Com 4 qubits, o treino ficou perto de 0,77; não devemos generalizar a memorização completa para esse caso. O gráfico mostra médias, não intervalos de confiança; o eixo foi ampliado para começar em 0,4.</div>
+  </section>
+  <section class="slide" aria-label="Concentração, shots e ruído">
+    <header><h2>Qubits, concentração e ruído</h2><p class="lede">A largura de banda muda o comportamento do kernel; shots e ruído também afetam o F1.</p></header>
+    <div class="result-columns">
+      <div class="result-panel">
+        <h3>Variância do kernel · RePro</h3>
+        <p class="smallline">Com emaranhamento · escala logarítmica</p>
+        <div class="result-figure"><svg viewBox="0 0 650 345" role="img" aria-label="Na RePro, a variância do kernel com largura 1 cai de 2 a 16 qubits; com largura 0,01 ela aumenta e se estabiliza">
+          <line x1="70" y1="35" x2="70" y2="275" class="ln st-muted" style="stroke-width:2"/><line x1="70" y1="275" x2="560" y2="275" class="ln st-muted" style="stroke-width:2"/>
+          <text x="56" y="42" text-anchor="end" class="ts">10⁻¹</text><text x="56" y="160" text-anchor="end" class="ts">10⁻⁵</text><text x="56" y="280" text-anchor="end" class="ts">10⁻⁹</text>
+          <polyline points="70.0,43.3 105.0,59.8 140.0,76.5 175.0,95.2 210.0,113.0 245.0,130.8 280.0,148.2 315.0,166.0 350.0,182.7 385.0,200.3 420.0,215.8 455.0,231.6 490.0,244.9 525.0,259.5 560.0,269.3" fill="none" class="st-q" style="stroke-width:4;stroke-linejoin:round"/>
+          <polyline points="70.0,140.4 105.0,125.5 140.0,100.9 175.0,83.8 210.0,64.8 245.0,64.9 280.0,48.1 315.0,54.7 350.0,41.3 385.0,48.5 420.0,39.0 455.0,47.5 490.0,40.3 525.0,50.6 560.0,43.8" fill="none" class="st-c" style="stroke-width:3;stroke-dasharray:9 7;stroke-linejoin:round"/>
+          <text x="70" y="312" text-anchor="middle" class="ts">2</text><text x="280" y="312" text-anchor="middle" class="ts">8</text><text x="560" y="312" text-anchor="middle" class="ts">16 qubits</text>
+        </svg></div>
+        <div class="legend"><span><i class="dot" style="background:var(--q)"></i>b = 1</span><span><i class="dot" style="background:var(--c)"></i>b = 0,01</span></div>
+      </div>
+      <div class="result-panel">
+        <h3>Impacto no F1 de teste</h3>
+        <div style="border-top:2px solid var(--line);padding-top:22px;margin-top:4px"><p>1.000 shots · 12 qubits</p><div class="big-number" style="font-size:54px;margin:12px 0">−0,010 a −0,015</div><p class="smallline">em relação ao cenário exato</p></div>
+        <div style="border-top:2px solid var(--line);padding-top:22px;margin-top:12px"><p>Ruído p = 0,01 · 8 qubits</p><div class="big-number" style="font-size:54px;margin:12px 0">−0,069 a −0,089</div><p class="smallline">QSVM abaixo do SVM ajustado nas quatro configurações</p></div>
+      </div>
+    </div>
+    <p class="foot"><b>H4: evidência mista.</b> Com largura fixa, o F1 já era baixo em 4 qubits. O ruído é uma simulação simplificada.</p>
+    <div class="speaker">A análise de concentração é descritiva: usa 300 textos e PCA ajustado na base inteira, fora da validação preditiva aninhada. Na RePro, com emaranhamento e b igual a 1, a variância fora da diagonal caiu de 0,05286 em 2 qubits para 1,55 vezes 10 elevado a menos 9 em 16. Com b igual a 0,01 ela aumentou, então mais qubits não implicam o mesmo comportamento para toda largura. No experimento preditivo, com 1.000 shots e 12 qubits, a redução de F1 foi aproximadamente de 0,010 a 0,015. Com p igual a 0,01 e 8 qubits, foi de 0,069 a 0,089 e o QSVM ficou significativamente abaixo do SVM ajustado nas quatro configurações. O ruído despolarizante global é uma simplificação; não deve ser apresentado como previsão de hardware real. H4 tem evidência mista, já que o F1 com largura fixa era baixo com 4 qubits e não houve queda sistemática ao longo das configurações.</div>
+  </section>
+
+  <section class="slide" aria-label="O que as hipóteses mostraram">
+    <header><h2>O que conseguimos responder?</h2><p class="lede">Os testes ajudam a interpretar os resultados — e também mostram onde a pergunta ficou aberta.</p></header>
+    <div class="result-list">
+      <div class="item"><h3>H1 · comparação</h3><p><strong>Sem diferença significativa detectada</strong> entre QSVM e SVM ajustado no cenário exato.</p></div>
+      <div class="item"><h3>H2 · ajuste</h3><p>Não houve evidência de que o SVM padrão fosse inferior ao ajustado.</p></div>
+      <div class="item"><h3>H3 · compressão</h3><p>O teste compara diferenças com sinal; a hipótese sobre <strong>magnitude</strong> não foi testada diretamente.</p></div>
+      <div class="item"><h3>H4 · qubits</h3><p>Evidência mista: a concentração depende da largura, e o F1 com largura fixa já era baixo em 4 qubits.</p></div>
+      <div class="item"><h3>H5 · emaranhamento</h3><p>Não detectamos diferença significativa no cenário exato; isso não demonstra equivalência.</p></div>
+    </div>
+    <div class="speaker">H1 é a alternativa à hipótese de diferença média zero. H2 não foi confirmada, e não é correto dizer que um baseline fraco explicou o resultado principal. Em H3, a intenção era testar se a magnitude da diferença diminuía com NCA, mas o teste compara as diferenças assinadas; mantemos essa limitação. Em H4, há queda de variância com largura fixa em parte dos casos, mas não queda sistemática do F1 ao longo dos qubits. Para H5, uma comparação não significativa não confirma ausência de contribuição. Essas conclusões dizem respeito ao desenho e às bases estudadas.</div>
+  </section>
+  <section class="slide" aria-label="Conclusão e limites">
+    <header><h2>O que fica do estudo</h2><p class="lede">As conclusões valem para as bases, os modelos e o protocolo avaliados.</p></header>
+    <p class="result-quote">Não encontramos vantagem significativa do kernel quântico na comparação principal.</p>
+    <div class="result-strip">
+      <div><h3>O que observamos</h3><p>QSVM e SVM-RBF ajustado tiveram F1 próximo; o desempenho do QSVM variou fortemente com o ajuste da largura de banda.</p></div>
+      <div><h3>O que não sabemos</h3><p>Não detectar diferença não prova equivalência. Sem baseline de 384 dimensões, não medimos a perda total da compressão.</p></div>
+      <div><h3>Próximos passos</h3><p>Testar novas bases, produtos inéditos, margens de equivalência e condições mais próximas do hardware.</p></div>
+    </div>
+    <p class="foot"><b>Júlia Alves</b> · Ciência da Computação · Inteli</p>
+    <div class="speaker">A contribuição está na comparação sobre as mesmas representações comprimidas. Não detectamos diferença significativa entre QSVM e SVM ajustado no cenário exato e nas configurações avaliadas. Com largura fixa, o desempenho no teste foi baixo, enquanto o ajuste da largura esteve associado a desempenho alto; C também podia variar. Isso não prova equivalência nem permite extrapolar para hardware real. As bases diferem em domínio e tamanho além da língua. Não houve baseline de 384 dimensões, e avaliações do mesmo produto podem aparecer em treino e teste da RePro. Próximos passos incluem validação agrupada por produto, outras bases e modelos, margem de equivalência definida antes da análise e ruído calibrado. Obrigada, fico à disposição.</div>
+  </section>
+
+</main>
+</div>
+
+<nav class="bar" aria-label="Navegação dos slides">
+  <button id="prev" type="button" aria-label="Slide anterior">Anterior</button>
+  <span class="count" id="count">1 / 14</span>
+  <button id="next" type="button" aria-label="Próximo slide">Próximo</button>
+  <button id="notesToggle" type="button" aria-expanded="false" aria-controls="notesPanel">Notas de fala</button>
+  <button id="fs" type="button" aria-label="Tela cheia">Tela cheia</button>
+</nav>
+<aside class="notes" id="notesPanel" hidden aria-live="polite"><b>Notas de fala</b><span id="notesContent"></span></aside>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage');
+  var viewport = document.getElementById('viewport');
+  var count = document.getElementById('count');
+  var progress = document.getElementById('progress');
+  var fsBtn = document.getElementById('fs');
+  var notesBtn = document.getElementById('notesToggle');
+  var notesPanel = document.getElementById('notesPanel');
+  var notesContent = document.getElementById('notesContent');
+  var i = 0;
+
+  function fit(){
+    var r = viewport.getBoundingClientRect();
+    var s = Math.min(r.width / 1600, r.height / 900);
+    stage.style.transform = 'translate(-50%, -50%) scale(' + s + ')';
+  }
+  function show(n){
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function(el, k){ el.classList.toggle('active', k === i); el.setAttribute('aria-hidden', k === i ? 'false' : 'true'); });
+    count.textContent = (i + 1) + ' / ' + slides.length;
+    var note = slides[i].querySelector('.speaker');
+    notesContent.textContent = note ? note.textContent : '';
+    progress.style.width = ((i + 1) / slides.length * 100) + '%';
+    try { history.replaceState(null, '', '#s' + (i + 1)); } catch(e) {}
+    requestAnimationFrame(fit);
+  }
+  document.getElementById('prev').addEventListener('click', function(){ show(i - 1); });
+  document.getElementById('next').addEventListener('click', function(){ show(i + 1); });
+  notesBtn.addEventListener('click', function(){
+    notesPanel.hidden = !notesPanel.hidden;
+    notesBtn.setAttribute('aria-expanded', String(!notesPanel.hidden));
+    requestAnimationFrame(fit);
+  });
+  function toggleFs(){
+    var d = document, el = d.documentElement;
+    if (d.fullscreenElement || d.webkitFullscreenElement) {
+      (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    } else {
+      var req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) { try { var r = req.call(el); if (r && r.catch) r.catch(function(){}); } catch(e) {} }
+    }
+  }
+  fsBtn.addEventListener('click', toggleFs);
+  function onFs(){
+    var on = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    document.body.classList.toggle('is-fs', on);
+    fsBtn.textContent = on ? 'Sair da tela cheia' : 'Tela cheia';
+    requestAnimationFrame(fit);
+  }
+  document.addEventListener('fullscreenchange', onFs);
+  document.addEventListener('webkitfullscreenchange', onFs);
+  stage.addEventListener('click', function(e){
+    var r = stage.getBoundingClientRect();
+    show(e.clientX > r.left + r.width / 2 ? i + 1 : i - 1);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); show(i + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'f' || e.key === 'F') { toggleFs(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+  });
+  window.addEventListener('resize', fit);
+  var m = /^#s(\d+)$/.exec(location.hash || '');
+  show(m ? parseInt(m[1], 10) - 1 : 0);
+  fit();
+})();
+</script>
+
+</body></html>
