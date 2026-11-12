@@ -16,7 +16,7 @@ A avaliação usa 10 sementes de validação cruzada estratificada com 5 folds. 
 - [Artigo em LaTeX](artigo/artigo.tex): fonte, figuras e tabelas.
 - [Suplemento](artigo/suplemento/): tabela completa e CSV dos testes.
 
-As figuras da versão do artigo são geradas a partir de `resultados/resumo_f1.csv` pelo script `artigo/gerar_figuras.py`. O script `07_figuras.py` gera as figuras da versão anterior do experimento, na pasta `figuras/` da raiz. As tabelas incluídas no artigo estão em `artigo/tabelas/`; as da raiz são geradas por `06_tabelas_latex.py`.
+As figuras do artigo são geradas a partir dos resultados salvos por `artigo/gerar_figuras.py` e `artigo/gerar_concentracao.py`. O script `07_figuras.py` gera as figuras da versão anterior do experimento, na pasta `figuras/` da raiz. As tabelas incluídas no artigo estão em `artigo/tabelas/`; as da raiz são geradas por `06_tabelas_latex.py`.
 
 ## Instalação e execução
 
@@ -32,6 +32,7 @@ Para refazer o fluxo completo, execute os scripts numerados na ordem ou use `sh 
 
 ```sh
 python artigo/gerar_figuras.py
+python artigo/gerar_concentracao.py
 ```
 
 `rodar_rodada3.sh` prepara uma execução paralela no macOS. Ele move os resultados atuais para `resultados/rodada2/` e pode sobrescrever arquivos nessa pasta; faça uma cópia do histórico antes de usá-lo. Não é necessário executá-lo para consultar os resultados incluídos.
